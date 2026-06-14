@@ -241,6 +241,85 @@
       font-size: 28px;
       margin-bottom: 8px;
     }
+
+    /* ── CLIENTS SECTION ── */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .btn-add {
+      padding: 8px 16px;
+      background: #22c55e;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-add:hover { background: #16a34a; }
+
+    .client-form {
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .client-form.open { display: block; }
+
+    .client-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .client-card {
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .client-card .info h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .client-card .info p {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: 1px solid #1e3a1e;
+      color: #9ca3af;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-delete:hover { border-color: #f87171; color: #f87171; }
+
+    .empty-state {
+      text-align: center;
+      color: #4b5563;
+      font-size: 13px;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
@@ -315,10 +394,30 @@
         </div>
       </div>
 
-      <p class="section-title">Features</p>
-      <div class="coming-soon">
-        <span>🚀</span>
-        Client & session management — coming soon
+      <div class="section-header">
+        <p class="section-title" style="margin-bottom:0;">Clients</p>
+        <button class="btn-add" onclick="toggleClientForm()">+ Add Client</button>
+      </div>
+
+      <div class="client-form" id="client-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="client-name" placeholder="Jane Doe" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="client-email" placeholder="jane@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" id="client-phone" placeholder="+1 555 123 4567" />
+        </div>
+        <button class="btn-primary" onclick="addClient()">Save Client</button>
+        <p class="msg" id="client-msg"></p>
+      </div>
+
+      <div class="client-list" id="client-list">
+        <div class="empty-state">Loading clients...</div>
       </div>
     </div>
   </div>
@@ -391,6 +490,105 @@
       const name = user.get('name') || user.get('username') || 'Coach';
       document.getElementById('coach-name').textContent = name;
       showPage('dashboard-page');
+      loadClients();
+    }
+
+    // ── CLIENTS ──
+    function toggleClientForm() {
+      document.getElementById('client-form').classList.toggle('open');
+    }
+
+    async function addClient() {
+      const name = document.getElementById('client-name').value.trim();
+      const email = document.getElementById('client-email').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
+      const msg = document.getElementById('client-msg');
+
+      if (!name) {
+        msg.className = 'msg error';
+        msg.textContent = 'Name is required.';
+        return;
+      }
+
+      msg.className = 'msg';
+      msg.textContent = 'Saving...';
+
+      try {
+        const user = await Parse.User.currentAsync();
+        const Client = Parse.Object.extend('Clients');
+        const client = new Client();
+        client.set('name', name);
+        client.set('email', email);
+        client.set('phone', phone);
+        client.set('coachId', user.id);
+        await client.save();
+
+        msg.className = 'msg success';
+        msg.textContent = 'Client added!';
+
+        document.getElementById('client-name').value = '';
+        document.getElementById('client-email').value = '';
+        document.getElementById('client-phone').value = '';
+
+        loadClients();
+      } catch(e) {
+        msg.className = 'msg error';
+        msg.textContent = e.message || 'Failed to save client.';
+      }
+    }
+
+    async function loadClients() {
+      const listEl = document.getElementById('client-list');
+      try {
+        const user = await Parse.User.currentAsync();
+        const Client = Parse.Object.extend('Clients');
+        const query = new Parse.Query(Client);
+        query.equalTo('coachId', user.id);
+        query.descending('createdAt');
+        const results = await query.find();
+
+        // Update stats
+        document.querySelectorAll('.stat-card .number')[0].textContent = results.length;
+
+        if (results.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No clients yet. Add your first client above.</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        results.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'client-card';
+          card.innerHTML = `
+            <div class="info">
+              <h4>${escapeHtml(c.get('name') || '')}</h4>
+              <p>${escapeHtml(c.get('email') || '')}${c.get('phone') ? ' • ' + escapeHtml(c.get('phone')) : ''}</p>
+            </div>
+            <button class="btn-delete" onclick="deleteClient('${c.id}')">Remove</button>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading clients.</div>';
+      }
+    }
+
+    async function deleteClient(id) {
+      try {
+        const Client = Parse.Object.extend('Clients');
+        const client = new Client();
+        client.id = id;
+        await client.destroy();
+        loadClients();
+      } catch(e) {
+        alert('Error deleting client: ' + (e.message || ''));
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
 
     (async () => {
@@ -399,5 +597,4 @@
     })();
   </script>
 </body>
-    </html>
-  
+</html>
