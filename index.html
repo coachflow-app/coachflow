@@ -629,6 +629,7 @@
     </div>
 
     <p class="msg" id="pricing-msg"></p>
+    <button class="btn-plan" id="manual-confirm-btn" style="display:none; max-width:420px;" onclick="manualActivate()">I've completed the payment</button>
     <button class="pricing-skip" id="pricing-back-btn" style="display:none;" onclick="showPage('dashboard-page')">← Back to dashboard</button>
   </div>
 
@@ -855,7 +856,10 @@
     function choosePlan(plan, amount) {
       const msg = document.getElementById('pricing-msg');
       msg.className = 'msg';
-      msg.textContent = '';
+      msg.textContent = 'Complete your payment in the window, then come back here.';
+
+      pendingPlan = plan;
+      document.getElementById('manual-confirm-btn').style.display = 'block';
 
       openKkiapayWidget({
         amount: amount,
@@ -863,15 +867,34 @@
         sandbox: true,
         data: plan
       });
+    }
 
-      addKkiapaySuccessListener(async (response) => {
-        await activatePlan(plan);
+    let pendingPlan = null;
+    let listenersAttached = false;
+
+    function attachKkiapayListeners() {
+      if (listenersAttached) return;
+      listenersAttached = true;
+
+      addSuccessListener(async (response) => {
+        if (pendingPlan) {
+          await activatePlan(pendingPlan);
+          pendingPlan = null;
+        }
       });
 
-      addKkiapayFailedListener((error) => {
+      addFailedListener((error) => {
+        const msg = document.getElementById('pricing-msg');
         msg.className = 'msg error';
         msg.textContent = 'Payment failed or cancelled. Please try again.';
+        pendingPlan = null;
       });
+    }
+
+    function manualActivate() {
+      if (pendingPlan) {
+        activatePlan(pendingPlan);
+      }
     }
 
     async function activatePlan(plan) {
@@ -891,6 +914,7 @@
 
         msg.className = 'msg success';
         msg.textContent = 'Plan activated! Redirecting...';
+        document.getElementById('manual-confirm-btn').style.display = 'none';
 
         setTimeout(() => loadDashboard(user), 1000);
       } catch(e) {
@@ -1144,6 +1168,7 @@
     }
 
     (async () => {
+      attachKkiapayListeners();
       const current = await Parse.User.currentAsync();
       if (current) loadDashboard(current);
     })();
