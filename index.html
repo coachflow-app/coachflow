@@ -740,7 +740,6 @@
     </div>
 
     <p class="msg" id="pricing-msg"></p>
-    <button class="btn-plan" id="manual-confirm-btn" style="display:none; max-width:420px;" onclick="manualActivate()">I've completed the payment</button>
     <button class="pricing-skip" id="pricing-back-btn" style="display:none;" onclick="showPage('dashboard-page')">← Back to dashboard</button>
   </div>
 
@@ -987,7 +986,6 @@
       msg.textContent = 'Complete your payment in the window, then come back here.';
 
       pendingPlan = plan;
-      document.getElementById('manual-confirm-btn').style.display = 'block';
 
       attachKkiapayListeners();
 
@@ -1027,12 +1025,6 @@
       }
     }
 
-    function manualActivate() {
-      if (pendingPlan) {
-        activatePlan(pendingPlan);
-      }
-    }
-
     async function activatePlan(plan) {
       const msg = document.getElementById('pricing-msg');
       msg.className = 'msg';
@@ -1050,7 +1042,6 @@
 
         msg.className = 'msg success';
         msg.textContent = 'Plan activated! Redirecting...';
-        document.getElementById('manual-confirm-btn').style.display = 'none';
 
         setTimeout(() => loadDashboard(user), 1000);
       } catch(e) {
