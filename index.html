@@ -1754,40 +1754,32 @@
     }
 
     // ── GEMINI AI INTEGRATION ──
-    const GROQ_API_KEY = "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";
-    const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const NETLIFY_GROQ_URL = "https://astounding-kitsune-fdeb6b.netlify.app/.netlify/functions/groq";
 
     async function callGemini(prompt, maxRetries = 3) {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-          const response = await fetch(GROQ_URL, {
+          const response = await fetch(NETLIFY_GROQ_URL, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer " + GROQ_API_KEY
-            },
-            body: JSON.stringify({
-              model: "llama-3.3-70b-versatile",
-              messages: [{ role: "user", content: prompt }]
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: prompt }),
             signal: controller.signal
           });
 
           clearTimeout(timeoutId);
           const data = await response.json();
 
-          // If overloaded/rate-limited, retry with exponential backoff
           if (data.error) {
             const isRetryable = response.status === 429 || response.status === 503;
             if (isRetryable && attempt < maxRetries) {
-              const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+              const waitTime = Math.pow(2, attempt) * 1000;
               await new Promise(r => setTimeout(r, waitTime));
               continue;
             }
-            throw new Error(data.error.message || "Groq API error");
+            throw new Error(data.error.message || "AI API error");
           }
 
           return data.choices?.[0]?.message?.content || "No response generated.";
