@@ -956,21 +956,18 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: flex-end;
-      justify-content: center;
+      background: #0a0f0a;
+      z-index: 999999999;
+      align-items: stretch;
+      justify-content: stretch;
     }
 
     .messages-overlay.open { display: flex; }
 
     .messages-box {
       background: #111811;
-      border: 1px solid #1e3a1e;
-      border-radius: 16px 16px 0 0;
       width: 100%;
-      max-width: 480px;
-      height: 80vh;
+      height: 100%;
       display: flex;
       flex-direction: column;
     }
@@ -1022,12 +1019,14 @@
     .messages-input-row {
       display: flex;
       gap: 8px;
-      padding: 12px 16px;
+      padding: 12px 16px 20px 16px;
       border-top: 1px solid #1e3a1e;
+      background: #111811;
     }
 
     .messages-input-row input {
       flex: 1;
+      min-width: 0;
       padding: 10px 12px;
       background: #0a0f0a;
       border: 1px solid #1e3a1e;
@@ -1035,6 +1034,10 @@
       color: #f0f0f0;
       font-size: 14px;
       outline: none;
+    }
+
+    .messages-input-row button {
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -1275,7 +1278,7 @@
 
       <div class="progress-subsection">
         <p class="progress-label">Workout Performance</p>
-        <div class="chart-card">
+        <div class="chart-card" id="coach-chart-card" style="display:none;">
           <div class="chart-card-header">
             <span class="chart-card-title">Progress Over Time</span>
             <select id="coach-chart-exercise-select" class="chart-exercise-select" onchange="onCoachExerciseChange()"></select>
@@ -1385,7 +1388,7 @@
           <p class="msg" id="workoutlog-msg"></p>
         </div>
 
-        <div class="chart-card">
+        <div class="chart-card" id="client-chart-card" style="display:none;">
           <div class="chart-card-header">
             <span class="chart-card-title">Progress Over Time</span>
             <select id="client-chart-exercise-select" class="chart-exercise-select" onchange="onClientExerciseChange()"></select>
@@ -2031,9 +2034,15 @@
         coachWorkoutLogsCache = results;
         renderWorkoutLogList(listEl, results);
 
-        const selectEl = document.getElementById('coach-chart-exercise-select');
-        populateExerciseSelect(selectEl, results);
-        coachWorkoutChart = drawWorkoutChart('coach-workout-chart', results, selectEl.value, coachWorkoutChart);
+        const chartCard = document.getElementById('coach-chart-card');
+        if (results.length === 0) {
+          chartCard.style.display = 'none';
+        } else {
+          chartCard.style.display = 'block';
+          const selectEl = document.getElementById('coach-chart-exercise-select');
+          populateExerciseSelect(selectEl, results);
+          coachWorkoutChart = drawWorkoutChart('coach-workout-chart', results, selectEl.value, coachWorkoutChart);
+        }
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
       }
@@ -2142,6 +2151,7 @@
         document.getElementById('messages-title').textContent = 'Messages with your Coach';
       }
       document.getElementById('messages-panel').classList.add('open');
+      document.getElementById('floating-messages-btn').classList.remove('show');
       document.getElementById('message-text').value = '';
       loadMessages();
     }
@@ -2149,6 +2159,7 @@
     function closeMessages() {
       document.getElementById('messages-panel').classList.remove('open');
       messagesContext = null;
+      updateFloatingMessagesBtn();
     }
 
     async function loadMessages() {
@@ -2855,9 +2866,15 @@
         clientWorkoutLogsCache = results;
         renderWorkoutLogList(listEl, results);
 
-        const selectEl = document.getElementById('client-chart-exercise-select');
-        populateExerciseSelect(selectEl, results);
-        clientWorkoutChart = drawWorkoutChart('client-workout-chart', results, selectEl.value, clientWorkoutChart);
+        const chartCard = document.getElementById('client-chart-card');
+        if (results.length === 0) {
+          chartCard.style.display = 'none';
+        } else {
+          chartCard.style.display = 'block';
+          const selectEl = document.getElementById('client-chart-exercise-select');
+          populateExerciseSelect(selectEl, results);
+          clientWorkoutChart = drawWorkoutChart('client-workout-chart', results, selectEl.value, clientWorkoutChart);
+        }
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
       }
