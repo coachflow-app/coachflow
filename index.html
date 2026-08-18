@@ -6,6 +6,7 @@
   <title>CoachFlow</title>
   <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
   <script src="https://cdn.kkiapay.me/k.js"></script>
+  <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -839,7 +840,76 @@
     .ai-result-actions button { flex: 1; }
 
     /* ── PROGRESS / PHOTOS / FEEDBACK / MESSAGES (Phase 1 v2) ── */
-    .progress-subsection { margin-bottom: 24px; }
+    .progress-subsection { margin-bottom: 14px; }
+
+    .btn-progress-action {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid #1e3a1e;
+      color: #22c55e;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-progress-action:hover { border-color: #22c55e; background: #0d1f0d; }
+
+    .chart-card {
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 8px;
+    }
+
+    .chart-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chart-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .chart-exercise-select {
+      background: #0a0f0a;
+      border: 1px solid #1e3a1e;
+      color: #f0f0f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+      max-width: 55%;
+    }
+
+    .floating-messages-btn {
+      display: none;
+      position: fixed;
+      bottom: 92px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #22c55e;
+      color: #000;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+      z-index: 9998;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .floating-messages-btn.show { display: flex; }
 
     .progress-label {
       font-size: 12px;
@@ -1194,7 +1264,7 @@
         <div class="empty-state">Loading programs...</div>
       </div>
 
-      <p class="section-title" style="margin-top:20px;">Progress</p>
+      <p class="section-title" style="margin-top:14px;">Progress</p>
 
       <div class="progress-subsection">
         <p class="progress-label">Weight History</p>
@@ -1205,6 +1275,13 @@
 
       <div class="progress-subsection">
         <p class="progress-label">Workout Performance</p>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Progress Over Time</span>
+            <select id="coach-chart-exercise-select" class="chart-exercise-select" onchange="onCoachExerciseChange()"></select>
+          </div>
+          <canvas id="coach-workout-chart" height="180"></canvas>
+        </div>
         <div class="client-list" id="coach-workoutlog-list">
           <div class="empty-state">Loading...</div>
         </div>
@@ -1231,11 +1308,6 @@
       <div class="client-list" id="coach-feedback-list">
         <div class="empty-state">Loading...</div>
       </div>
-
-      <div class="section-header" style="margin-top:8px;">
-        <p class="section-title" style="margin-bottom:0;">Messages</p>
-        <button class="btn-add" onclick="openMessages('coach')">💬 Open Messages</button>
-      </div>
     </div>
   </div>
 
@@ -1261,12 +1333,12 @@
         <div class="empty-state">No workout plans yet.</div>
       </div>
 
-      <p class="section-title" style="margin-top:20px;">My Progress</p>
+      <p class="section-title" style="margin-top:14px;">My Progress</p>
 
       <div class="progress-subsection">
         <div class="section-header">
           <p class="progress-label" style="margin-bottom:0;">Weight</p>
-          <button class="btn-add" onclick="toggleWeightForm()">+ Log Weight</button>
+          <button class="btn-progress-action" onclick="toggleWeightForm()">+ Log Weight</button>
         </div>
         <div class="client-form" id="weight-form">
           <div class="form-group">
@@ -1284,7 +1356,7 @@
       <div class="progress-subsection">
         <div class="section-header">
           <p class="progress-label" style="margin-bottom:0;">Workout Performance</p>
-          <button class="btn-add" onclick="toggleWorkoutLogForm()">+ Log Performance</button>
+          <button class="btn-progress-action" onclick="toggleWorkoutLogForm()">+ Log Performance</button>
         </div>
         <div class="client-form" id="workoutlog-form">
           <div class="form-group">
@@ -1312,6 +1384,15 @@
           <button class="btn-primary" onclick="addWorkoutLog()">Save Performance</button>
           <p class="msg" id="workoutlog-msg"></p>
         </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Progress Over Time</span>
+            <select id="client-chart-exercise-select" class="chart-exercise-select" onchange="onClientExerciseChange()"></select>
+          </div>
+          <canvas id="client-workout-chart" height="180"></canvas>
+        </div>
+
         <div class="client-list" id="client-workoutlog-list">
           <div class="empty-state">Loading...</div>
         </div>
@@ -1320,7 +1401,7 @@
       <div class="progress-subsection">
         <div class="section-header">
           <p class="progress-label" style="margin-bottom:0;">Progress Photos</p>
-          <button class="btn-add" onclick="togglePhotoForm()">+ Add Photo</button>
+          <button class="btn-progress-action" onclick="togglePhotoForm()">+ Add Photo</button>
         </div>
         <div class="client-form" id="photo-form">
           <div class="form-group">
@@ -1335,17 +1416,15 @@
         </div>
       </div>
 
-      <p class="section-title" style="margin-top:20px;">Feedback from your Coach</p>
+      <p class="section-title" style="margin-top:14px;">Feedback from your Coach</p>
       <div class="client-list" id="client-feedback-list">
         <div class="empty-state">Loading...</div>
       </div>
-
-      <div class="section-header" style="margin-top:8px;">
-        <p class="section-title" style="margin-bottom:0;">Messages</p>
-        <button class="btn-add" onclick="openMessages('client')">💬 Open Messages</button>
-      </div>
     </div>
   </div>
+
+  <!-- FLOATING MESSAGES BUTTON (positioned above the CoachFlow assistant widget) -->
+  <button id="floating-messages-btn" class="floating-messages-btn" title="Messages">💬</button>
 
   <!-- MESSAGES PANEL (shared by coach and client) -->
   <div id="messages-panel" class="messages-overlay">
@@ -1381,6 +1460,21 @@
     function showPage(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(id).classList.add('active');
+      updateFloatingMessagesBtn();
+    }
+
+    function updateFloatingMessagesBtn() {
+      const btn = document.getElementById('floating-messages-btn');
+      if (!btn) return;
+      if (document.getElementById('client-dashboard-page').classList.contains('active') && sessionClientId) {
+        btn.classList.add('show');
+        btn.onclick = () => openMessages('client');
+      } else if (document.getElementById('client-detail-page').classList.contains('active') && currentClientId) {
+        btn.classList.add('show');
+        btn.onclick = () => openMessages('coach');
+      } else {
+        btn.classList.remove('show');
+      }
     }
 
     async function login() {
@@ -1819,7 +1913,90 @@
       }
     }
 
-    // ── PROGRESS: WORKOUT PERFORMANCE ──
+    // ── PROGRESS: WORKOUT PERFORMANCE CHART (shared logic, coach + client) ──
+    let coachWorkoutChart = null;
+    let clientWorkoutChart = null;
+
+    function populateExerciseSelect(selectEl, logs) {
+      const previousValue = selectEl.value;
+      const exercises = [...new Set(logs.map(l => l.get('exerciseName')).filter(Boolean))];
+      selectEl.innerHTML = '';
+      if (exercises.length === 0) {
+        selectEl.innerHTML = '<option value="">No exercises yet</option>';
+        return;
+      }
+      exercises.forEach(ex => {
+        const opt = document.createElement('option');
+        opt.value = ex;
+        opt.textContent = ex;
+        selectEl.appendChild(opt);
+      });
+      if (exercises.includes(previousValue)) {
+        selectEl.value = previousValue;
+      }
+    }
+
+    function drawWorkoutChart(canvasId, logs, exerciseName, existingChartRef) {
+      if (existingChartRef) existingChartRef.destroy();
+      if (!exerciseName) return null;
+
+      const filtered = logs
+        .filter(l => l.get('exerciseName') === exerciseName)
+        .sort((a, b) => new Date(a.get('date')) - new Date(b.get('date')));
+
+      const labels = filtered.map(l => {
+        const d = l.get('date');
+        return d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+      });
+      const weights = filtered.map(l => l.get('weight') || 0);
+      const reps = filtered.map(l => l.get('reps') || 0);
+
+      const canvasEl = document.getElementById(canvasId);
+      if (!canvasEl) return null;
+      const ctx = canvasEl.getContext('2d');
+
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Weight (kg)',
+              data: weights,
+              borderColor: '#22c55e',
+              backgroundColor: 'rgba(34,197,94,0.15)',
+              tension: 0.3,
+              fill: true,
+              pointBackgroundColor: '#22c55e',
+              yAxisID: 'y'
+            },
+            {
+              label: 'Reps',
+              data: reps,
+              borderColor: '#60a5fa',
+              borderDash: [4, 4],
+              tension: 0.3,
+              fill: false,
+              pointBackgroundColor: '#60a5fa',
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { labels: { color: '#d1d5db', font: { size: 11 } } }
+          },
+          scales: {
+            x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#1e3a1e' } },
+            y: { position: 'left', ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#1e3a1e' }, title: { display: true, text: 'kg', color: '#6b7280' } },
+            y1: { position: 'right', ticks: { color: '#6b7280', font: { size: 10 } }, grid: { display: false }, title: { display: true, text: 'reps', color: '#6b7280' } }
+          }
+        }
+      });
+    }
+
     function renderWorkoutLogList(listEl, results) {
       if (results.length === 0) {
         listEl.innerHTML = '<div class="empty-state">No performance logged yet.</div>';
@@ -1836,6 +2013,13 @@
       });
     }
 
+    let coachWorkoutLogsCache = [];
+
+    function onCoachExerciseChange() {
+      const selectEl = document.getElementById('coach-chart-exercise-select');
+      coachWorkoutChart = drawWorkoutChart('coach-workout-chart', coachWorkoutLogsCache, selectEl.value, coachWorkoutChart);
+    }
+
     async function loadWorkoutLogsCoach() {
       const listEl = document.getElementById('coach-workoutlog-list');
       try {
@@ -1844,7 +2028,12 @@
         query.equalTo('clientId', currentClientId);
         query.descending('date');
         const results = await query.find();
+        coachWorkoutLogsCache = results;
         renderWorkoutLogList(listEl, results);
+
+        const selectEl = document.getElementById('coach-chart-exercise-select');
+        populateExerciseSelect(selectEl, results);
+        coachWorkoutChart = drawWorkoutChart('coach-workout-chart', results, selectEl.value, coachWorkoutChart);
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
       }
@@ -2648,6 +2837,13 @@
       }
     }
 
+    let clientWorkoutLogsCache = [];
+
+    function onClientExerciseChange() {
+      const selectEl = document.getElementById('client-chart-exercise-select');
+      clientWorkoutChart = drawWorkoutChart('client-workout-chart', clientWorkoutLogsCache, selectEl.value, clientWorkoutChart);
+    }
+
     async function loadWorkoutLogsClient() {
       const listEl = document.getElementById('client-workoutlog-list');
       try {
@@ -2656,7 +2852,12 @@
         query.equalTo('clientId', sessionClientId);
         query.descending('date');
         const results = await query.find();
+        clientWorkoutLogsCache = results;
         renderWorkoutLogList(listEl, results);
+
+        const selectEl = document.getElementById('client-chart-exercise-select');
+        populateExerciseSelect(selectEl, results);
+        clientWorkoutChart = drawWorkoutChart('client-workout-chart', results, selectEl.value, clientWorkoutChart);
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
       }
