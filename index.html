@@ -837,6 +837,135 @@
     .ai-result-actions.visible { display: flex; }
 
     .ai-result-actions button { flex: 1; }
+
+    /* ── PROGRESS / PHOTOS / FEEDBACK / MESSAGES (Phase 1 v2) ── */
+    .progress-subsection { margin-bottom: 24px; }
+
+    .progress-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .photo-grid img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #1e3a1e;
+    }
+
+    .feedback-card {
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .feedback-card .feedback-date {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .feedback-card .feedback-text {
+      font-size: 13px;
+      color: #d1d5db;
+    }
+
+    .messages-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .messages-overlay.open { display: flex; }
+
+    .messages-box {
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 480px;
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #1e3a1e;
+    }
+
+    .messages-header h3 { font-size: 15px; font-weight: 700; }
+
+    .messages-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .message-bubble {
+      max-width: 75%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .message-bubble.mine {
+      align-self: flex-end;
+      background: #22c55e;
+      color: #000;
+    }
+
+    .message-bubble.theirs {
+      align-self: flex-start;
+      background: #1e3a1e;
+      color: #f0f0f0;
+    }
+
+    .message-time {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    .messages-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid #1e3a1e;
+    }
+
+    .messages-input-row input {
+      flex: 1;
+      padding: 10px 12px;
+      background: #0a0f0a;
+      border: 1px solid #1e3a1e;
+      border-radius: 10px;
+      color: #f0f0f0;
+      font-size: 14px;
+      outline: none;
+    }
   </style>
 </head>
 <body>
@@ -1064,6 +1193,49 @@
       <div class="client-list" id="program-history-list">
         <div class="empty-state">Loading programs...</div>
       </div>
+
+      <p class="section-title" style="margin-top:20px;">Progress</p>
+
+      <div class="progress-subsection">
+        <p class="progress-label">Weight History</p>
+        <div class="client-list" id="coach-weight-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+      <div class="progress-subsection">
+        <p class="progress-label">Workout Performance</p>
+        <div class="client-list" id="coach-workoutlog-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+      <div class="progress-subsection">
+        <p class="progress-label">Progress Photos</p>
+        <div class="photo-grid" id="coach-photo-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <p class="section-title" style="margin-bottom:0;">Feedback</p>
+      </div>
+      <div class="client-form" id="feedback-form" style="display:block;">
+        <div class="form-group">
+          <label>Write feedback for this client</label>
+          <input type="text" id="feedback-text" placeholder="e.g. Great progress this week, keep it up!" />
+        </div>
+        <button class="btn-primary" onclick="addFeedback()">Send Feedback</button>
+        <p class="msg" id="feedback-msg"></p>
+      </div>
+      <div class="client-list" id="coach-feedback-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+
+      <div class="section-header" style="margin-top:8px;">
+        <p class="section-title" style="margin-bottom:0;">Messages</p>
+        <button class="btn-add" onclick="openMessages('coach')">💬 Open Messages</button>
+      </div>
     </div>
   </div>
 
@@ -1087,6 +1259,105 @@
       <p class="section-title">My Workout Plans</p>
       <div class="client-list" id="client-workouts-list">
         <div class="empty-state">No workout plans yet.</div>
+      </div>
+
+      <p class="section-title" style="margin-top:20px;">My Progress</p>
+
+      <div class="progress-subsection">
+        <div class="section-header">
+          <p class="progress-label" style="margin-bottom:0;">Weight</p>
+          <button class="btn-add" onclick="toggleWeightForm()">+ Log Weight</button>
+        </div>
+        <div class="client-form" id="weight-form">
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" step="0.1" id="weight-value" placeholder="e.g. 72.5" />
+          </div>
+          <button class="btn-primary" onclick="addWeightLog()">Save Weight</button>
+          <p class="msg" id="weight-msg"></p>
+        </div>
+        <div class="client-list" id="client-weight-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+      <div class="progress-subsection">
+        <div class="section-header">
+          <p class="progress-label" style="margin-bottom:0;">Workout Performance</p>
+          <button class="btn-add" onclick="toggleWorkoutLogForm()">+ Log Performance</button>
+        </div>
+        <div class="client-form" id="workoutlog-form">
+          <div class="form-group">
+            <label>Session</label>
+            <select id="workoutlog-session" style="width:100%; padding:12px 14px; background:#0a0f0a; border:1px solid #1e3a1e; border-radius:10px; color:#f0f0f0; font-size:14px;"></select>
+          </div>
+          <div class="form-group">
+            <label>Exercise Name</label>
+            <input type="text" id="workoutlog-exercise" placeholder="e.g. Bench Press" />
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Sets</label>
+              <input type="number" id="workoutlog-sets" placeholder="3" />
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Reps</label>
+              <input type="number" id="workoutlog-reps" placeholder="10" />
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Weight (kg)</label>
+              <input type="number" step="0.1" id="workoutlog-weight" placeholder="40" />
+            </div>
+          </div>
+          <button class="btn-primary" onclick="addWorkoutLog()">Save Performance</button>
+          <p class="msg" id="workoutlog-msg"></p>
+        </div>
+        <div class="client-list" id="client-workoutlog-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+      <div class="progress-subsection">
+        <div class="section-header">
+          <p class="progress-label" style="margin-bottom:0;">Progress Photos</p>
+          <button class="btn-add" onclick="togglePhotoForm()">+ Add Photo</button>
+        </div>
+        <div class="client-form" id="photo-form">
+          <div class="form-group">
+            <label>Choose Photo</label>
+            <input type="file" id="photo-file" accept="image/*" />
+          </div>
+          <button class="btn-primary" onclick="addProgressPhoto()">Upload Photo</button>
+          <p class="msg" id="photo-msg"></p>
+        </div>
+        <div class="photo-grid" id="client-photo-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+      <p class="section-title" style="margin-top:20px;">Feedback from your Coach</p>
+      <div class="client-list" id="client-feedback-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+
+      <div class="section-header" style="margin-top:8px;">
+        <p class="section-title" style="margin-bottom:0;">Messages</p>
+        <button class="btn-add" onclick="openMessages('client')">💬 Open Messages</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGES PANEL (shared by coach and client) -->
+  <div id="messages-panel" class="messages-overlay">
+    <div class="messages-box">
+      <div class="messages-header">
+        <h3 id="messages-title">Messages</h3>
+        <button class="btn-back" onclick="closeMessages()">✕ Close</button>
+      </div>
+      <div class="messages-list" id="messages-list"></div>
+      <div class="messages-input-row">
+        <input type="text" id="message-text" placeholder="Type a message..." />
+        <button class="btn-primary" style="width:auto; margin-top:0;" onclick="sendMessage()">Send</button>
       </div>
     </div>
   </div>
@@ -1177,6 +1448,7 @@
     let currentPlan = null;
 
     async function loadDashboard(user) {
+      currentCoachUserId = user.id;
       const name = user.get('name') || user.get('username') || 'Coach';
       document.getElementById('coach-name').textContent = name;
 
@@ -1510,6 +1782,240 @@
       renderAiFeatures();
       loadProgramHistory();
       updateClientStatusBadge();
+      loadWeightLogsCoach();
+      loadWorkoutLogsCoach();
+      loadPhotosCoach();
+      loadFeedbackCoach();
+    }
+
+    // ── PROGRESS: WEIGHT ──
+    function renderWeightList(listEl, results) {
+      if (results.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No weight entries yet.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      results.forEach(w => {
+        const d = w.get('date');
+        const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+        const card = document.createElement('div');
+        card.className = 'session-card';
+        card.innerHTML = `<div class="info"><div class="date">${w.get('weight')} kg</div><div class="notes">${escapeHtml(dateStr)}</div></div>`;
+        listEl.appendChild(card);
+      });
+    }
+
+    async function loadWeightLogsCoach() {
+      const listEl = document.getElementById('coach-weight-list');
+      try {
+        const ProgressLog = Parse.Object.extend('ProgressLogs');
+        const query = new Parse.Query(ProgressLog);
+        query.equalTo('clientId', currentClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderWeightList(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading weight history.</div>';
+      }
+    }
+
+    // ── PROGRESS: WORKOUT PERFORMANCE ──
+    function renderWorkoutLogList(listEl, results) {
+      if (results.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No performance logged yet.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      results.forEach(w => {
+        const d = w.get('date');
+        const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+        const card = document.createElement('div');
+        card.className = 'session-card';
+        card.innerHTML = `<div class="info"><div class="date">${escapeHtml(w.get('exerciseName') || '')}</div><div class="notes">${w.get('sets') || 0} sets × ${w.get('reps') || 0} reps @ ${w.get('weight') || 0} kg — ${escapeHtml(dateStr)}</div></div>`;
+        listEl.appendChild(card);
+      });
+    }
+
+    async function loadWorkoutLogsCoach() {
+      const listEl = document.getElementById('coach-workoutlog-list');
+      try {
+        const WorkoutLog = Parse.Object.extend('WorkoutLogs');
+        const query = new Parse.Query(WorkoutLog);
+        query.equalTo('clientId', currentClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderWorkoutLogList(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
+      }
+    }
+
+    // ── PROGRESS: PHOTOS ──
+    function renderPhotoGrid(listEl, results) {
+      if (results.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No photos yet.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      results.forEach(p => {
+        const file = p.get('photo');
+        if (!file) return;
+        const img = document.createElement('img');
+        img.src = file.url();
+        listEl.appendChild(img);
+      });
+    }
+
+    async function loadPhotosCoach() {
+      const listEl = document.getElementById('coach-photo-list');
+      try {
+        const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
+        const query = new Parse.Query(ProgressPhoto);
+        query.equalTo('clientId', currentClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderPhotoGrid(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading photos.</div>';
+      }
+    }
+
+    // ── FEEDBACK ──
+    function renderFeedbackList(listEl, results) {
+      if (results.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No feedback yet.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      results.forEach(f => {
+        const d = f.get('date');
+        const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+        const card = document.createElement('div');
+        card.className = 'feedback-card';
+        card.innerHTML = `<div class="feedback-date">${escapeHtml(dateStr)}</div><div class="feedback-text">${escapeHtml(f.get('text') || '')}</div>`;
+        listEl.appendChild(card);
+      });
+    }
+
+    async function loadFeedbackCoach() {
+      const listEl = document.getElementById('coach-feedback-list');
+      try {
+        const Feedback = Parse.Object.extend('Feedbacks');
+        const query = new Parse.Query(Feedback);
+        query.equalTo('clientId', currentClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderFeedbackList(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading feedback.</div>';
+      }
+    }
+
+    async function addFeedback() {
+      const text = document.getElementById('feedback-text').value.trim();
+      const msg = document.getElementById('feedback-msg');
+      if (!text) {
+        msg.className = 'msg error';
+        msg.textContent = 'Please write a feedback message.';
+        return;
+      }
+      msg.className = 'msg';
+      msg.textContent = 'Saving...';
+      try {
+        const user = await Parse.User.currentAsync();
+        const Feedback = Parse.Object.extend('Feedbacks');
+        const feedback = new Feedback();
+        feedback.set('clientId', currentClientId);
+        feedback.set('coachId', user.id);
+        feedback.set('text', text);
+        feedback.set('date', new Date());
+        await feedback.save();
+        msg.className = 'msg success';
+        msg.textContent = 'Feedback sent!';
+        document.getElementById('feedback-text').value = '';
+        loadFeedbackCoach();
+      } catch(e) {
+        msg.className = 'msg error';
+        msg.textContent = e.message || 'Failed to save feedback.';
+      }
+    }
+
+    // ── MESSAGES (shared coach/client) ──
+    let messagesContext = null;
+    let currentCoachUserId = null;
+
+    function openMessages(role) {
+      if (role === 'coach') {
+        messagesContext = { clientId: currentClientId, coachId: currentCoachUserId, senderId: currentCoachUserId, senderType: 'coach' };
+        document.getElementById('messages-title').textContent = 'Messages with ' + currentClientName;
+      } else {
+        messagesContext = { clientId: sessionClientId, coachId: sessionCoachId, senderId: sessionClientId, senderType: 'client' };
+        document.getElementById('messages-title').textContent = 'Messages with your Coach';
+      }
+      document.getElementById('messages-panel').classList.add('open');
+      document.getElementById('message-text').value = '';
+      loadMessages();
+    }
+
+    function closeMessages() {
+      document.getElementById('messages-panel').classList.remove('open');
+      messagesContext = null;
+    }
+
+    async function loadMessages() {
+      const listEl = document.getElementById('messages-list');
+      if (!messagesContext || !messagesContext.coachId) {
+        listEl.innerHTML = '<div class="empty-state">Messages unavailable.</div>';
+        return;
+      }
+      try {
+        const Message = Parse.Object.extend('Messages');
+        const query = new Parse.Query(Message);
+        query.equalTo('clientId', messagesContext.clientId);
+        query.equalTo('coachId', messagesContext.coachId);
+        query.ascending('date');
+        const results = await query.find();
+
+        if (results.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No messages yet. Say hello!</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        results.forEach(m => {
+          const isMine = m.get('senderType') === messagesContext.senderType;
+          const bubble = document.createElement('div');
+          bubble.className = 'message-bubble ' + (isMine ? 'mine' : 'theirs');
+          const d = m.get('date');
+          const timeStr = d ? new Date(d).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+          bubble.innerHTML = `<div class="message-text">${escapeHtml(m.get('text') || '')}</div><div class="message-time">${escapeHtml(timeStr)}</div>`;
+          listEl.appendChild(bubble);
+        });
+        listEl.scrollTop = listEl.scrollHeight;
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading messages.</div>';
+      }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('message-text');
+      const text = input.value.trim();
+      if (!text || !messagesContext || !messagesContext.coachId) return;
+      try {
+        const Message = Parse.Object.extend('Messages');
+        const message = new Message();
+        message.set('clientId', messagesContext.clientId);
+        message.set('coachId', messagesContext.coachId);
+        message.set('senderId', messagesContext.senderId);
+        message.set('senderType', messagesContext.senderType);
+        message.set('text', text);
+        message.set('date', new Date());
+        await message.save();
+        input.value = '';
+        loadMessages();
+      } catch(e) {
+        alert('Error sending message: ' + (e.message || ''));
+      }
     }
 
     async function updateClientStatusBadge() {
@@ -2000,6 +2506,7 @@
         const clientRecord = results[0];
         sessionClientId = clientRecord.id;
         sessionClientName = clientRecord.get('name') || 'Client';
+        sessionCoachId = clientRecord.get('coachId') || null;
 
         msg.className = 'msg success';
         msg.textContent = 'Welcome back!';
@@ -2012,6 +2519,7 @@
 
     let sessionClientId = null;
     let sessionClientName = null;
+    let sessionCoachId = null;
 
     function clientLogout() {
       sessionClientId = null;
@@ -2025,6 +2533,193 @@
       showPage('client-dashboard-page');
       loadClientSessions();
       loadClientWorkoutPlans();
+      loadWeightLogsClient();
+      loadWorkoutLogsClient();
+      loadPhotosClient();
+      loadFeedbackClient();
+      populateSessionDropdown();
+    }
+
+    // ── PROGRESS FORMS TOGGLE ──
+    function toggleWeightForm() { document.getElementById('weight-form').classList.toggle('open'); }
+    function toggleWorkoutLogForm() { document.getElementById('workoutlog-form').classList.toggle('open'); }
+    function togglePhotoForm() { document.getElementById('photo-form').classList.toggle('open'); }
+
+    // ── PROGRESS: WEIGHT (client) ──
+    async function addWeightLog() {
+      const value = document.getElementById('weight-value').value;
+      const msg = document.getElementById('weight-msg');
+      if (!value) {
+        msg.className = 'msg error';
+        msg.textContent = 'Please enter your weight.';
+        return;
+      }
+      msg.className = 'msg';
+      msg.textContent = 'Saving...';
+      try {
+        const ProgressLog = Parse.Object.extend('ProgressLogs');
+        const log = new ProgressLog();
+        log.set('clientId', sessionClientId);
+        log.set('weight', parseFloat(value));
+        log.set('date', new Date());
+        await log.save();
+        msg.className = 'msg success';
+        msg.textContent = 'Weight logged!';
+        document.getElementById('weight-value').value = '';
+        loadWeightLogsClient();
+      } catch(e) {
+        msg.className = 'msg error';
+        msg.textContent = e.message || 'Failed to save weight.';
+      }
+    }
+
+    async function loadWeightLogsClient() {
+      const listEl = document.getElementById('client-weight-list');
+      try {
+        const ProgressLog = Parse.Object.extend('ProgressLogs');
+        const query = new Parse.Query(ProgressLog);
+        query.equalTo('clientId', sessionClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderWeightList(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading weight history.</div>';
+      }
+    }
+
+    // ── PROGRESS: WORKOUT PERFORMANCE (client) ──
+    async function populateSessionDropdown() {
+      const select = document.getElementById('workoutlog-session');
+      select.innerHTML = '<option value="">Select a session</option>';
+      try {
+        const Session = Parse.Object.extend('Sessions');
+        const query = new Parse.Query(Session);
+        query.equalTo('clientId', sessionClientId);
+        query.descending('date');
+        const results = await query.find();
+        results.forEach(s => {
+          const d = s.get('date');
+          const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No date';
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = dateStr + (s.get('notes') ? ' - ' + s.get('notes') : '');
+          select.appendChild(opt);
+        });
+      } catch(e) {}
+    }
+
+    async function addWorkoutLog() {
+      const sessionId = document.getElementById('workoutlog-session').value;
+      const exerciseName = document.getElementById('workoutlog-exercise').value.trim();
+      const sets = document.getElementById('workoutlog-sets').value;
+      const reps = document.getElementById('workoutlog-reps').value;
+      const weight = document.getElementById('workoutlog-weight').value;
+      const msg = document.getElementById('workoutlog-msg');
+
+      if (!sessionId || !exerciseName || !sets || !reps) {
+        msg.className = 'msg error';
+        msg.textContent = 'Please select a session and fill in exercise, sets and reps.';
+        return;
+      }
+
+      msg.className = 'msg';
+      msg.textContent = 'Saving...';
+      try {
+        const WorkoutLog = Parse.Object.extend('WorkoutLogs');
+        const log = new WorkoutLog();
+        log.set('clientId', sessionClientId);
+        log.set('sessionId', sessionId);
+        log.set('exerciseName', exerciseName);
+        log.set('sets', parseInt(sets));
+        log.set('reps', parseInt(reps));
+        log.set('weight', weight ? parseFloat(weight) : 0);
+        log.set('date', new Date());
+        await log.save();
+        msg.className = 'msg success';
+        msg.textContent = 'Performance saved!';
+        document.getElementById('workoutlog-exercise').value = '';
+        document.getElementById('workoutlog-sets').value = '';
+        document.getElementById('workoutlog-reps').value = '';
+        document.getElementById('workoutlog-weight').value = '';
+        loadWorkoutLogsClient();
+      } catch(e) {
+        msg.className = 'msg error';
+        msg.textContent = e.message || 'Failed to save performance.';
+      }
+    }
+
+    async function loadWorkoutLogsClient() {
+      const listEl = document.getElementById('client-workoutlog-list');
+      try {
+        const WorkoutLog = Parse.Object.extend('WorkoutLogs');
+        const query = new Parse.Query(WorkoutLog);
+        query.equalTo('clientId', sessionClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderWorkoutLogList(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
+      }
+    }
+
+    // ── PROGRESS: PHOTOS (client) ──
+    async function addProgressPhoto() {
+      const fileInput = document.getElementById('photo-file');
+      const msg = document.getElementById('photo-msg');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        msg.className = 'msg error';
+        msg.textContent = 'Please choose a photo.';
+        return;
+      }
+      msg.className = 'msg';
+      msg.textContent = 'Uploading...';
+      try {
+        const file = fileInput.files[0];
+        const parseFile = new Parse.File(file.name, file);
+        await parseFile.save();
+        const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
+        const photo = new ProgressPhoto();
+        photo.set('clientId', sessionClientId);
+        photo.set('photo', parseFile);
+        photo.set('date', new Date());
+        await photo.save();
+        msg.className = 'msg success';
+        msg.textContent = 'Photo uploaded!';
+        fileInput.value = '';
+        loadPhotosClient();
+      } catch(e) {
+        msg.className = 'msg error';
+        msg.textContent = e.message || 'Upload failed.';
+      }
+    }
+
+    async function loadPhotosClient() {
+      const listEl = document.getElementById('client-photo-list');
+      try {
+        const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
+        const query = new Parse.Query(ProgressPhoto);
+        query.equalTo('clientId', sessionClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderPhotoGrid(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading photos.</div>';
+      }
+    }
+
+    // ── FEEDBACK (client) ──
+    async function loadFeedbackClient() {
+      const listEl = document.getElementById('client-feedback-list');
+      try {
+        const Feedback = Parse.Object.extend('Feedbacks');
+        const query = new Parse.Query(Feedback);
+        query.equalTo('clientId', sessionClientId);
+        query.descending('date');
+        const results = await query.find();
+        renderFeedbackList(listEl, results);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Error loading feedback.</div>';
+      }
     }
 
     async function loadClientSessions() {
