@@ -911,6 +911,79 @@
 
     .floating-messages-btn.show { display: flex; }
 
+    .photo-form-compact { padding: 14px; }
+    .photo-form-compact .form-group { margin-bottom: 10px; }
+
+    .photo-date-group { margin-bottom: 14px; }
+
+    .photo-date-header {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .photo-compare-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .photo-compare-bar select {
+      flex: 1;
+      background: #0a0f0a;
+      border: 1px solid #1e3a1e;
+      color: #f0f0f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .photo-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .photo-compare-grid img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #1e3a1e;
+      cursor: pointer;
+    }
+
+    .photo-compare-label {
+      font-size: 10px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .photo-grid img { cursor: pointer; }
+
+    .photo-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 999999998;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .photo-lightbox.open { display: flex; }
+
+    .photo-lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 10px;
+    }
+
     .progress-label {
       font-size: 12px;
       font-weight: 700;
@@ -1292,7 +1365,8 @@
 
       <div class="progress-subsection">
         <p class="progress-label">Progress Photos</p>
-        <div class="photo-grid" id="coach-photo-list">
+        <div id="coach-photo-compare" style="display:none;"></div>
+        <div id="coach-photo-groups">
           <div class="empty-state">Loading...</div>
         </div>
       </div>
@@ -1362,30 +1436,33 @@
           <button class="btn-progress-action" onclick="toggleWorkoutLogForm()">+ Log Performance</button>
         </div>
         <div class="client-form" id="workoutlog-form">
-          <div class="form-group">
+          <div class="form-group" id="workoutlog-session-group">
             <label>Session</label>
             <select id="workoutlog-session" style="width:100%; padding:12px 14px; background:#0a0f0a; border:1px solid #1e3a1e; border-radius:10px; color:#f0f0f0; font-size:14px;"></select>
           </div>
-          <div class="form-group">
-            <label>Exercise Name</label>
-            <input type="text" id="workoutlog-exercise" placeholder="e.g. Bench Press" />
+          <p class="empty-state" id="workoutlog-no-sessions-msg" style="display:none; padding:8px 0;">No sessions available yet. Ask your coach to schedule a session first.</p>
+          <div id="workoutlog-fields">
+            <div class="form-group">
+              <label>Exercise Name</label>
+              <input type="text" id="workoutlog-exercise" placeholder="e.g. Bench Press" />
+            </div>
+            <div class="form-row" style="display:flex; gap:10px;">
+              <div class="form-group" style="flex:1;">
+                <label>Sets</label>
+                <input type="number" id="workoutlog-sets" placeholder="3" />
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Reps</label>
+                <input type="number" id="workoutlog-reps" placeholder="10" />
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Weight (kg)</label>
+                <input type="number" step="0.1" id="workoutlog-weight" placeholder="40" />
+              </div>
+            </div>
+            <button class="btn-primary" onclick="addWorkoutLog()">Save Performance</button>
+            <p class="msg" id="workoutlog-msg"></p>
           </div>
-          <div class="form-row" style="display:flex; gap:10px;">
-            <div class="form-group" style="flex:1;">
-              <label>Sets</label>
-              <input type="number" id="workoutlog-sets" placeholder="3" />
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>Reps</label>
-              <input type="number" id="workoutlog-reps" placeholder="10" />
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>Weight (kg)</label>
-              <input type="number" step="0.1" id="workoutlog-weight" placeholder="40" />
-            </div>
-          </div>
-          <button class="btn-primary" onclick="addWorkoutLog()">Save Performance</button>
-          <p class="msg" id="workoutlog-msg"></p>
         </div>
 
         <div class="chart-card" id="client-chart-card" style="display:none;">
@@ -1406,7 +1483,7 @@
           <p class="progress-label" style="margin-bottom:0;">Progress Photos</p>
           <button class="btn-progress-action" onclick="togglePhotoForm()">+ Add Photo</button>
         </div>
-        <div class="client-form" id="photo-form">
+        <div class="client-form photo-form-compact" id="photo-form">
           <div class="form-group">
             <label>Choose Photo</label>
             <input type="file" id="photo-file" accept="image/*" />
@@ -1414,7 +1491,8 @@
           <button class="btn-primary" onclick="addProgressPhoto()">Upload Photo</button>
           <p class="msg" id="photo-msg"></p>
         </div>
-        <div class="photo-grid" id="client-photo-list">
+        <div id="client-photo-compare" style="display:none;"></div>
+        <div id="client-photo-groups">
           <div class="empty-state">Loading...</div>
         </div>
       </div>
@@ -1428,6 +1506,11 @@
 
   <!-- FLOATING MESSAGES BUTTON (positioned above the CoachFlow assistant widget) -->
   <button id="floating-messages-btn" class="floating-messages-btn" title="Messages">💬</button>
+
+  <!-- PHOTO LIGHTBOX (individual photo view) -->
+  <div id="photo-lightbox" class="photo-lightbox" onclick="closeLightbox()">
+    <img id="photo-lightbox-img" src="" />
+  </div>
 
   <!-- MESSAGES PANEL (shared by coach and client) -->
   <div id="messages-panel" class="messages-overlay">
@@ -2048,33 +2131,121 @@
       }
     }
 
-    // ── PROGRESS: PHOTOS ──
-    function renderPhotoGrid(listEl, results) {
+    // ── PROGRESS: PHOTOS (grouped by date + compare view) ──
+    function openLightbox(url) {
+      document.getElementById('photo-lightbox-img').src = url;
+      document.getElementById('photo-lightbox').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('photo-lightbox').classList.remove('open');
+    }
+
+    function groupPhotosByDate(results) {
+      const map = new Map();
+      const order = [];
+      results.forEach(p => {
+        const d = p.get('date');
+        const dateKey = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date';
+        if (!map.has(dateKey)) { map.set(dateKey, []); order.push(dateKey); }
+        map.get(dateKey).push(p);
+      });
+      return { map, order };
+    }
+
+    function renderPhotoGroups(containerId, compareId, results) {
+      const container = document.getElementById(containerId);
+      const compareEl = document.getElementById(compareId);
+
       if (results.length === 0) {
-        listEl.innerHTML = '<div class="empty-state">No photos yet.</div>';
+        container.innerHTML = '<div class="empty-state">No photos yet.</div>';
+        compareEl.style.display = 'none';
+        compareEl.innerHTML = '';
         return;
       }
-      listEl.innerHTML = '';
-      results.forEach(p => {
-        const file = p.get('photo');
-        if (!file) return;
-        const img = document.createElement('img');
-        img.src = file.url();
-        listEl.appendChild(img);
+
+      const { map, order } = groupPhotosByDate(results);
+
+      container.innerHTML = '';
+      order.forEach(dateKey => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'photo-date-group';
+        const header = document.createElement('div');
+        header.className = 'photo-date-header';
+        header.textContent = dateKey;
+        groupDiv.appendChild(header);
+        const grid = document.createElement('div');
+        grid.className = 'photo-grid';
+        map.get(dateKey).forEach(p => {
+          const file = p.get('photo');
+          if (!file) return;
+          const img = document.createElement('img');
+          img.src = file.url();
+          img.onclick = () => openLightbox(file.url());
+          grid.appendChild(img);
+        });
+        groupDiv.appendChild(grid);
+        container.appendChild(groupDiv);
       });
+
+      if (order.length >= 2) {
+        compareEl.style.display = 'block';
+        compareEl.innerHTML = `
+          <p class="progress-label">Compare Photos</p>
+          <div class="photo-compare-bar">
+            <select id="${compareId}-select-a"></select>
+            <select id="${compareId}-select-b"></select>
+          </div>
+          <div class="photo-compare-grid" id="${compareId}-grid"></div>
+        `;
+        const selA = document.getElementById(compareId + '-select-a');
+        const selB = document.getElementById(compareId + '-select-b');
+        order.forEach(dateKey => {
+          const optA = document.createElement('option'); optA.value = dateKey; optA.textContent = dateKey; selA.appendChild(optA);
+          const optB = document.createElement('option'); optB.value = dateKey; optB.textContent = dateKey; selB.appendChild(optB);
+        });
+        selA.value = order[order.length - 1];
+        selB.value = order[0];
+        const updateCompare = () => renderCompareGrid(compareId, map, selA.value, selB.value);
+        selA.onchange = updateCompare;
+        selB.onchange = updateCompare;
+        updateCompare();
+      } else {
+        compareEl.style.display = 'none';
+        compareEl.innerHTML = '';
+      }
+    }
+
+    function renderCompareGrid(compareId, map, dateA, dateB) {
+      const grid = document.getElementById(compareId + '-grid');
+      if (!grid) return;
+      const photosA = map.get(dateA) || [];
+      const photosB = map.get(dateB) || [];
+      const fileA = photosA[0] ? photosA[0].get('photo') : null;
+      const fileB = photosB[0] ? photosB[0].get('photo') : null;
+      grid.innerHTML = `
+        <div>
+          ${fileA ? `<img src="${fileA.url()}" onclick="openLightbox('${fileA.url()}')" />` : '<div class="empty-state">No photo</div>'}
+          <div class="photo-compare-label">Before — ${escapeHtml(dateA)}</div>
+        </div>
+        <div>
+          ${fileB ? `<img src="${fileB.url()}" onclick="openLightbox('${fileB.url()}')" />` : '<div class="empty-state">No photo</div>'}
+          <div class="photo-compare-label">After — ${escapeHtml(dateB)}</div>
+        </div>
+      `;
     }
 
     async function loadPhotosCoach() {
-      const listEl = document.getElementById('coach-photo-list');
+      const container = document.getElementById('coach-photo-groups');
       try {
         const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
         const query = new Parse.Query(ProgressPhoto);
         query.equalTo('clientId', currentClientId);
         query.descending('date');
         const results = await query.find();
-        renderPhotoGrid(listEl, results);
+        renderPhotoGroups('coach-photo-groups', 'coach-photo-compare', results);
       } catch(e) {
-        listEl.innerHTML = '<div class="empty-state">Error loading photos.</div>';
+        container.innerHTML = '<div class="empty-state">Error loading photos.</div>';
       }
     }
 
@@ -2790,6 +2961,9 @@
     // ── PROGRESS: WORKOUT PERFORMANCE (client) ──
     async function populateSessionDropdown() {
       const select = document.getElementById('workoutlog-session');
+      const sessionGroup = document.getElementById('workoutlog-session-group');
+      const noSessionsMsg = document.getElementById('workoutlog-no-sessions-msg');
+      const fieldsEl = document.getElementById('workoutlog-fields');
       select.innerHTML = '<option value="">Select a session</option>';
       try {
         const Session = Parse.Object.extend('Sessions');
@@ -2797,6 +2971,18 @@
         query.equalTo('clientId', sessionClientId);
         query.descending('date');
         const results = await query.find();
+
+        if (results.length === 0) {
+          sessionGroup.style.display = 'none';
+          fieldsEl.style.display = 'none';
+          noSessionsMsg.style.display = 'block';
+          return;
+        }
+
+        sessionGroup.style.display = 'block';
+        fieldsEl.style.display = 'block';
+        noSessionsMsg.style.display = 'none';
+
         results.forEach(s => {
           const d = s.get('date');
           const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No date';
@@ -2841,7 +3027,15 @@
         document.getElementById('workoutlog-sets').value = '';
         document.getElementById('workoutlog-reps').value = '';
         document.getElementById('workoutlog-weight').value = '';
-        loadWorkoutLogsClient();
+        await loadWorkoutLogsClient();
+
+        const chartSelect = document.getElementById('client-chart-exercise-select');
+        if ([...chartSelect.options].some(o => o.value === exerciseName)) {
+          chartSelect.value = exerciseName;
+          clientWorkoutChart = drawWorkoutChart('client-workout-chart', clientWorkoutLogsCache, exerciseName, clientWorkoutChart);
+        }
+
+        document.getElementById('workoutlog-form').classList.remove('open');
       } catch(e) {
         msg.className = 'msg error';
         msg.textContent = e.message || 'Failed to save performance.';
@@ -2912,16 +3106,16 @@
     }
 
     async function loadPhotosClient() {
-      const listEl = document.getElementById('client-photo-list');
+      const container = document.getElementById('client-photo-groups');
       try {
         const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
         const query = new Parse.Query(ProgressPhoto);
         query.equalTo('clientId', sessionClientId);
         query.descending('date');
         const results = await query.find();
-        renderPhotoGrid(listEl, results);
+        renderPhotoGroups('client-photo-groups', 'client-photo-compare', results);
       } catch(e) {
-        listEl.innerHTML = '<div class="empty-state">Error loading photos.</div>';
+        container.innerHTML = '<div class="empty-state">Error loading photos.</div>';
       }
     }
 
