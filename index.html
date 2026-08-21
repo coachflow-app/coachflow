@@ -917,6 +917,23 @@
 
     .floating-messages-btn.show { display: flex; }
 
+    .floating-messages-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid #0a0f0a;
+    }
+
     .photo-add-panel {
       display: none;
       align-items: center;
@@ -1542,7 +1559,10 @@
   </div>
 
   <!-- FLOATING MESSAGES BUTTON (positioned above the CoachFlow assistant widget) -->
-  <button id="floating-messages-btn" class="floating-messages-btn" title="Messages">💬</button>
+  <button id="floating-messages-btn" class="floating-messages-btn" title="Messages">
+    💬
+    <span id="floating-messages-badge" class="floating-messages-badge" style="display:none;"></span>
+  </button>
 
   <!-- PHOTO LIGHTBOX (individual photo view) -->
   <div id="photo-lightbox" class="photo-lightbox" onclick="closeLightbox()">
@@ -1592,11 +1612,66 @@
       if (document.getElementById('client-dashboard-page').classList.contains('active') && sessionClientId) {
         btn.classList.add('show');
         btn.onclick = () => openMessages('client');
+        updateUnreadBadge('client');
       } else if (document.getElementById('client-detail-page').classList.contains('active') && currentClientId) {
         btn.classList.add('show');
         btn.onclick = () => openMessages('coach');
+        updateUnreadBadge('coach');
       } else {
         btn.classList.remove('show');
+      }
+    }
+
+    // ── UNREAD MESSAGES BADGE ──
+    function getLastReadKey(role) {
+      if (role === 'coach') {
+        return 'coachflow_last_read_coach_' + currentClientId + '_' + currentCoachUserId;
+      }
+      return 'coachflow_last_read_client_' + sessionClientId + '_' + sessionCoachId;
+    }
+
+    function getLastReadTime(role) {
+      try {
+        const stored = localStorage.getItem(getLastReadKey(role));
+        return stored ? new Date(stored) : new Date(0);
+      } catch(e) {
+        return new Date(0);
+      }
+    }
+
+    function setLastReadNow(role) {
+      try {
+        localStorage.setItem(getLastReadKey(role), new Date().toISOString());
+      } catch(e) {}
+    }
+
+    async function updateUnreadBadge(role) {
+      const badgeEl = document.getElementById('floating-messages-badge');
+      if (!badgeEl) return;
+      try {
+        const clientId = role === 'coach' ? currentClientId : sessionClientId;
+        const coachId = role === 'coach' ? currentCoachUserId : sessionCoachId;
+        if (!clientId || !coachId) { badgeEl.style.display = 'none'; return; }
+
+        const otherSenderType = role === 'coach' ? 'client' : 'coach';
+        const lastRead = getLastReadTime(role);
+
+        const Message = Parse.Object.extend('Messages');
+        const query = new Parse.Query(Message);
+        query.equalTo('clientId', clientId);
+        query.equalTo('coachId', coachId);
+        query.equalTo('senderType', otherSenderType);
+        query.greaterThan('date', lastRead);
+        const count = await query.count();
+
+        if (count > 0) {
+          badgeEl.textContent = count > 9 ? '9+' : String(count);
+          badgeEl.style.display = 'flex';
+        } else {
+          badgeEl.style.display = 'none';
+        }
+      } catch(e) {
+        badgeEl.style.display = 'none';
       }
     }
 
@@ -2358,6 +2433,9 @@
         messagesContext = { clientId: sessionClientId, coachId: sessionCoachId, senderId: sessionClientId, senderType: 'client' };
         document.getElementById('messages-title').textContent = 'Messages with your Coach';
       }
+      setLastReadNow(role);
+      const badgeEl = document.getElementById('floating-messages-badge');
+      if (badgeEl) badgeEl.style.display = 'none';
       document.getElementById('messages-panel').classList.add('open');
       document.getElementById('floating-messages-btn').classList.remove('show');
       document.getElementById('message-text').value = '';
@@ -3134,8 +3212,9 @@
             canvas.width = width;
             canvas.height = height;
             canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
             canvas.toBlob((blob) => {
-              if (blob) resolve(blob);
+              if (blob) resolve({ blob, base64: dataUrl.split(',')[1] });
               else reject(new Error('Could not compress the image.'));
             }, 'image/jpeg', quality);
           };
@@ -3183,15 +3262,45 @@
       msg.textContent = 'Uploading...';
       try {
         const originalFile = fileInput.files[0];
-        let uploadBlob;
+        let compressed;
         try {
-          uploadBlob = await compressImage(originalFile, 1600, 0.82);
+          compressed = await compressImage(originalFile, 1600, 0.82);
         } catch (compressError) {
-          uploadBlob = originalFile;
+          compressed = null;
         }
 
-        const uploadResult = await uploadFileDirect(uploadBlob, 'progress-photo.jpg', 'image/jpeg');
-        const parseFile = new Parse.File(uploadResult.name, { url: uploadResult.url });
+        let parseFile;
+        let lastError = null;
+
+        // Attempt 1: direct fetch upload (works around Parse SDK file issues)
+        if (compressed) {
+          try {
+            const uploadResult = await uploadFileDirect(compressed.blob, 'progress-photo.jpg', 'image/jpeg');
+            parseFile = new Parse.File(uploadResult.name, { url: uploadResult.url });
+          } catch (err1) {
+            lastError = err1;
+          }
+        }
+
+        // Attempt 2: fallback via Parse SDK using base64 (different network path)
+        if (!parseFile) {
+          try {
+            const base64Data = compressed ? compressed.base64 : await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result.split(',')[1]);
+              reader.onerror = reject;
+              reader.readAsDataURL(originalFile);
+            });
+            parseFile = new Parse.File('progress-photo.jpg', { base64: base64Data }, 'image/jpeg');
+            await parseFile.save();
+          } catch (err2) {
+            lastError = err2;
+          }
+        }
+
+        if (!parseFile) {
+          throw lastError || new Error('Upload failed on both attempts.');
+        }
 
         const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
         const photo = new ProgressPhoto();
@@ -3207,7 +3316,7 @@
       } catch(e) {
         msg.className = 'msg error';
         const detail = (e && e.message) ? e.message : (e && e.code ? ('Error code ' + e.code) : (e ? String(e) : 'Unknown error'));
-        msg.textContent = 'Upload failed: ' + detail;
+        msg.textContent = 'Upload failed: ' + detail + ' — try disabling Data Saver / Lite mode in Chrome, or switch to Wi-Fi.';
         console.error('Photo upload error:', e);
       }
     }
