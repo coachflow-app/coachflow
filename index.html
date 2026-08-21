@@ -890,6 +890,12 @@
       max-width: 55%;
     }
 
+    .chart-canvas-wrap {
+      position: relative;
+      width: 100%;
+      transition: height 0.15s ease;
+    }
+
     .floating-messages-btn {
       display: none;
       position: fixed;
@@ -1386,7 +1392,9 @@
             <span class="chart-card-title">Progress Over Time</span>
             <select id="coach-chart-exercise-select" class="chart-exercise-select" onchange="onCoachExerciseChange()"></select>
           </div>
-          <canvas id="coach-workout-chart" height="180"></canvas>
+          <div class="chart-canvas-wrap" id="coach-chart-canvas-wrap">
+            <canvas id="coach-workout-chart"></canvas>
+          </div>
         </div>
         <div class="client-list" id="coach-workoutlog-list">
           <div class="empty-state">Loading...</div>
@@ -1500,7 +1508,9 @@
             <span class="chart-card-title">Progress Over Time</span>
             <select id="client-chart-exercise-select" class="chart-exercise-select" onchange="onClientExerciseChange()"></select>
           </div>
-          <canvas id="client-workout-chart" height="180"></canvas>
+          <div class="chart-canvas-wrap" id="client-chart-canvas-wrap">
+            <canvas id="client-workout-chart"></canvas>
+          </div>
         </div>
 
         <div class="client-list" id="client-workoutlog-list">
@@ -2049,7 +2059,7 @@
       }
     }
 
-    function drawWorkoutChart(canvasId, logs, exerciseName, existingChartRef) {
+    function drawWorkoutChart(canvasId, wrapId, logs, exerciseName, existingChartRef) {
       if (existingChartRef) existingChartRef.destroy();
       if (!exerciseName) return null;
 
@@ -2062,7 +2072,12 @@
         return d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
       });
       const weights = filtered.map(l => l.get('weight') || 0);
-      const reps = filtered.map(l => l.get('reps') || 0);
+      const repsArr = filtered.map(l => l.get('reps') || 0);
+      const pointCount = filtered.length;
+
+      const wrapEl = document.getElementById(wrapId);
+      const dynamicHeight = Math.max(90, Math.min(190, 70 + pointCount * 22));
+      wrapEl.style.height = dynamicHeight + 'px';
 
       const canvasEl = document.getElementById(canvasId);
       if (!canvasEl) return null;
@@ -2081,30 +2096,25 @@
               tension: 0.3,
               fill: true,
               pointBackgroundColor: '#22c55e',
-              yAxisID: 'y'
-            },
-            {
-              label: 'Reps',
-              data: reps,
-              borderColor: '#60a5fa',
-              borderDash: [4, 4],
-              tension: 0.3,
-              fill: false,
-              pointBackgroundColor: '#60a5fa',
-              yAxisID: 'y1'
+              pointRadius: pointCount <= 8 ? 4 : 2
             }
           ]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: true,
+          maintainAspectRatio: false,
           plugins: {
-            legend: { labels: { color: '#d1d5db', font: { size: 11 } } }
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `Weight: ${context.parsed.y} kg`,
+                afterLabel: (context) => `Reps: ${repsArr[context.dataIndex]}`
+              }
+            }
           },
           scales: {
             x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#1e3a1e' } },
-            y: { position: 'left', ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#1e3a1e' }, title: { display: true, text: 'kg', color: '#6b7280' } },
-            y1: { position: 'right', ticks: { color: '#6b7280', font: { size: 10 } }, grid: { display: false }, title: { display: true, text: 'reps', color: '#6b7280' } }
+            y: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#1e3a1e' }, title: { display: true, text: 'kg', color: '#6b7280' } }
           }
         }
       });
@@ -2130,7 +2140,7 @@
 
     function onCoachExerciseChange() {
       const selectEl = document.getElementById('coach-chart-exercise-select');
-      coachWorkoutChart = drawWorkoutChart('coach-workout-chart', coachWorkoutLogsCache, selectEl.value, coachWorkoutChart);
+      coachWorkoutChart = drawWorkoutChart('coach-workout-chart', 'coach-chart-canvas-wrap', coachWorkoutLogsCache, selectEl.value, coachWorkoutChart);
     }
 
     async function loadWorkoutLogsCoach() {
@@ -2151,7 +2161,7 @@
           chartCard.style.display = 'block';
           const selectEl = document.getElementById('coach-chart-exercise-select');
           populateExerciseSelect(selectEl, results);
-          coachWorkoutChart = drawWorkoutChart('coach-workout-chart', results, selectEl.value, coachWorkoutChart);
+          coachWorkoutChart = drawWorkoutChart('coach-workout-chart', 'coach-chart-canvas-wrap', results, selectEl.value, coachWorkoutChart);
         }
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
@@ -3059,7 +3069,7 @@
         const chartSelect = document.getElementById('client-chart-exercise-select');
         if ([...chartSelect.options].some(o => o.value === exerciseName)) {
           chartSelect.value = exerciseName;
-          clientWorkoutChart = drawWorkoutChart('client-workout-chart', clientWorkoutLogsCache, exerciseName, clientWorkoutChart);
+          clientWorkoutChart = drawWorkoutChart('client-workout-chart', 'client-chart-canvas-wrap', clientWorkoutLogsCache, exerciseName, clientWorkoutChart);
         }
 
         document.getElementById('workoutlog-form').classList.remove('open');
@@ -3073,7 +3083,7 @@
 
     function onClientExerciseChange() {
       const selectEl = document.getElementById('client-chart-exercise-select');
-      clientWorkoutChart = drawWorkoutChart('client-workout-chart', clientWorkoutLogsCache, selectEl.value, clientWorkoutChart);
+      clientWorkoutChart = drawWorkoutChart('client-workout-chart', 'client-chart-canvas-wrap', clientWorkoutLogsCache, selectEl.value, clientWorkoutChart);
     }
 
     async function loadWorkoutLogsClient() {
@@ -3094,7 +3104,7 @@
           chartCard.style.display = 'block';
           const selectEl = document.getElementById('client-chart-exercise-select');
           populateExerciseSelect(selectEl, results);
-          clientWorkoutChart = drawWorkoutChart('client-workout-chart', results, selectEl.value, clientWorkoutChart);
+          clientWorkoutChart = drawWorkoutChart('client-workout-chart', 'client-chart-canvas-wrap', results, selectEl.value, clientWorkoutChart);
         }
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading performance history.</div>';
@@ -3168,7 +3178,9 @@
         loadPhotosClient();
       } catch(e) {
         msg.className = 'msg error';
-        msg.textContent = e.message || 'Upload failed.';
+        const detail = (e && e.message) ? e.message : (e && e.code ? ('Error code ' + e.code) : (e ? String(e) : 'Unknown error'));
+        msg.textContent = 'Upload failed: ' + detail;
+        console.error('Photo upload error:', e);
       }
     }
 
