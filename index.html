@@ -3145,6 +3145,32 @@
       });
     }
 
+    async function uploadFileDirect(blob, fileName, mimeType) {
+      const response = await fetch('https://parseapi.back4app.com/files/' + fileName, {
+        method: 'POST',
+        headers: {
+          'X-Parse-Application-Id': 'mhmq0eeLycsl0VMveapFUY3fkyClJDahxUM3X9OC',
+          'X-Parse-Javascript-Key': 'VNyFkAPaWcu22RlGvgDxNtknmFZkgvwSVv3dyy6K',
+          'Content-Type': mimeType
+        },
+        body: blob
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        throw new Error('Server returned an unreadable response (status ' + response.status + ').');
+      }
+
+      if (!response.ok) {
+        const reason = (data && data.error) ? data.error : ('HTTP ' + response.status);
+        throw new Error(reason);
+      }
+
+      return data; // { name, url }
+    }
+
     async function addProgressPhoto() {
       const fileInput = document.getElementById('photo-file');
       const msg = document.getElementById('photo-msg');
@@ -3163,8 +3189,10 @@
         } catch (compressError) {
           uploadBlob = originalFile;
         }
-        const parseFile = new Parse.File('progress-photo.jpg', uploadBlob, 'image/jpeg');
-        await parseFile.save();
+
+        const uploadResult = await uploadFileDirect(uploadBlob, 'progress-photo.jpg', 'image/jpeg');
+        const parseFile = new Parse.File(uploadResult.name, { url: uploadResult.url });
+
         const ProgressPhoto = Parse.Object.extend('ProgressPhotos');
         const photo = new ProgressPhoto();
         photo.set('clientId', sessionClientId);
