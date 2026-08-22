@@ -1046,6 +1046,47 @@
 
     .program-execution { margin-top: 10px; }
 
+    .tab-nav {
+      display: flex;
+      gap: 6px;
+      margin: 16px 0 16px 0;
+      border-bottom: 1px solid #1e3a1e;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 10px 4px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tab-btn.active { color: #22c55e; border-bottom-color: #22c55e; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .btn-icon-feedback {
+      background: transparent;
+      border: 1px solid #1e3a1e;
+      color: #22c55e;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
     .floating-messages-btn {
       display: none;
       position: fixed;
@@ -1505,107 +1546,107 @@
         </div>
       </div>
 
-      <div class="section-header">
-        <p class="section-title" style="margin-bottom:0;">Sessions</p>
-        <button class="btn-add" onclick="toggleSessionForm()">+ Add Session</button>
+      <div class="tab-nav">
+        <button class="tab-btn active" id="coach-tabbtn-sessions" onclick="switchClientTab('coach','sessions')">Sessions</button>
+        <button class="tab-btn" id="coach-tabbtn-programs" onclick="switchClientTab('coach','programs')">Programs</button>
+        <button class="tab-btn" id="coach-tabbtn-progress" onclick="switchClientTab('coach','progress')">Progress</button>
       </div>
 
-      <div class="client-form session-form" id="session-form">
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="session-date" />
+      <div class="tab-panel active" id="coach-tab-sessions">
+        <div class="section-header">
+          <p class="section-title" style="margin-bottom:0;">Sessions</p>
+          <button class="btn-add" onclick="toggleSessionForm()">+ Add Session</button>
         </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <input type="text" id="session-notes" placeholder="Workout focus, progress, etc." />
+
+        <div class="client-form session-form" id="session-form">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="session-date" />
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="session-notes" placeholder="Workout focus, progress, etc." />
+          </div>
+          <button class="btn-primary" onclick="addSession()">Save Session</button>
+          <p class="msg" id="session-msg"></p>
         </div>
-        <button class="btn-primary" onclick="addSession()">Save Session</button>
-        <p class="msg" id="session-msg"></p>
+
+        <div class="client-list" id="session-list">
+          <div class="empty-state">Loading sessions...</div>
+        </div>
       </div>
 
-      <div class="client-list" id="session-list">
-        <div class="empty-state">Loading sessions...</div>
-      </div>
+      <div class="tab-panel" id="coach-tab-programs">
+        <div class="section-header">
+          <p class="section-title" style="margin-bottom:0;">Workout Programs</p>
+          <button class="btn-add" onclick="toggleProgramForm()">+ New Program</button>
+        </div>
 
-      <div class="section-header">
-        <p class="section-title" style="margin-bottom:0;">Workout Programs</p>
-        <button class="btn-add" onclick="toggleProgramForm()">+ New Program</button>
-      </div>
+        <div class="client-form" id="program-form">
+          <div class="program-form-layout">
+            <div class="program-form-main">
+              <div class="form-group">
+                <label>Program Title</label>
+                <input type="text" id="program-title" placeholder="e.g. Week 1 - Upper Body" />
+              </div>
+              <div id="exercise-rows"></div>
+              <button class="btn-secondary" onclick="addExerciseRow()">+ Add Exercise</button>
 
-      <div class="client-form" id="program-form">
-        <div class="program-form-layout">
-          <div class="program-form-main">
-            <div class="form-group">
-              <label>Program Title</label>
-              <input type="text" id="program-title" placeholder="e.g. Week 1 - Upper Body" />
+              <div class="form-group" style="margin-top:14px;">
+                <label>Notes / Message to Client</label>
+                <textarea id="program-notes" class="program-notes-textarea" placeholder="Add notes, or use the AI tools on the right to generate a message..."></textarea>
+              </div>
+
+              <button class="btn-save-program" onclick="saveManualProgram()">Save &amp; Send to Client</button>
+              <p class="msg" id="program-msg"></p>
             </div>
-            <div id="exercise-rows"></div>
-            <button class="btn-secondary" onclick="addExerciseRow()">+ Add Exercise</button>
 
-            <div class="form-group" style="margin-top:14px;">
-              <label>Notes / Message to Client</label>
-              <textarea id="program-notes" class="program-notes-textarea" placeholder="Add notes, or use the AI tools on the right to generate a message..."></textarea>
+            <div class="program-form-ai" id="ai-features-container"></div>
+          </div>
+        </div>
+
+        <p class="section-title" style="margin-top:20px;">Program History</p>
+        <div class="client-list" id="program-history-list">
+          <div class="empty-state">Loading programs...</div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="coach-tab-progress">
+        <div class="section-header">
+          <p class="section-title" style="margin-bottom:0;">Progress</p>
+          <button class="btn-icon-feedback" onclick="openFeedback('coach')" title="Feedback on this client's progress">📝</button>
+        </div>
+
+        <div class="progress-subsection">
+          <p class="progress-label">Weight History</p>
+          <div class="client-list" id="coach-weight-list">
+            <div class="empty-state">Loading...</div>
+          </div>
+        </div>
+
+        <div class="progress-subsection">
+          <p class="progress-label">Workout Performance</p>
+          <div class="chart-card" id="coach-chart-card" style="display:none;">
+            <div class="chart-card-header">
+              <span class="chart-card-title">Progress Over Time</span>
+              <select id="coach-chart-exercise-select" class="chart-exercise-select" onchange="onCoachExerciseChange()"></select>
             </div>
-
-            <button class="btn-save-program" onclick="saveManualProgram()">Save &amp; Send to Client</button>
-            <p class="msg" id="program-msg"></p>
+            <div class="chart-canvas-wrap" id="coach-chart-canvas-wrap">
+              <canvas id="coach-workout-chart"></canvas>
+            </div>
           </div>
-
-          <div class="program-form-ai" id="ai-features-container"></div>
-        </div>
-      </div>
-
-      <p class="section-title" style="margin-top:20px;">Program History</p>
-      <div class="client-list" id="program-history-list">
-        <div class="empty-state">Loading programs...</div>
-      </div>
-
-      <p class="section-title" style="margin-top:14px;">Progress</p>
-
-      <div class="progress-subsection">
-        <p class="progress-label">Weight History</p>
-        <div class="client-list" id="coach-weight-list">
-          <div class="empty-state">Loading...</div>
-        </div>
-      </div>
-
-      <div class="progress-subsection">
-        <p class="progress-label">Workout Performance</p>
-        <div class="chart-card" id="coach-chart-card" style="display:none;">
-          <div class="chart-card-header">
-            <span class="chart-card-title">Progress Over Time</span>
-            <select id="coach-chart-exercise-select" class="chart-exercise-select" onchange="onCoachExerciseChange()"></select>
-          </div>
-          <div class="chart-canvas-wrap" id="coach-chart-canvas-wrap">
-            <canvas id="coach-workout-chart"></canvas>
+          <div class="client-list" id="coach-workoutlog-list">
+            <div class="empty-state">Loading...</div>
           </div>
         </div>
-        <div class="client-list" id="coach-workoutlog-list">
-          <div class="empty-state">Loading...</div>
-        </div>
-      </div>
 
-      <div class="progress-subsection">
-        <p class="progress-label">Progress Photos</p>
-        <div id="coach-photo-compare" style="display:none;"></div>
-        <div id="coach-photo-groups">
-          <div class="empty-state">Loading...</div>
+        <div class="progress-subsection">
+          <p class="progress-label">Progress Photos</p>
+          <div id="coach-photo-compare" style="display:none;"></div>
+          <div id="coach-photo-groups">
+            <div class="empty-state">Loading...</div>
+          </div>
         </div>
-      </div>
-
-      <div class="section-header">
-        <p class="section-title" style="margin-bottom:0;">Feedback</p>
-      </div>
-      <div class="client-form" id="feedback-form" style="display:block;">
-        <div class="form-group">
-          <label>Write feedback for this client</label>
-          <input type="text" id="feedback-text" placeholder="e.g. Great progress this week, keep it up!" />
-        </div>
-        <button class="btn-primary" onclick="addFeedback()">Send Feedback</button>
-        <p class="msg" id="feedback-msg"></p>
-      </div>
-      <div class="client-list" id="coach-feedback-list">
-        <div class="empty-state">Loading...</div>
       </div>
     </div>
   </div>
@@ -1627,105 +1668,115 @@
         <p>Here's your training overview.</p>
       </div>
 
-      <p class="section-title">Upcoming & Past Sessions</p>
-      <div class="client-list" id="client-sessions-list">
-        <div class="empty-state">Loading sessions...</div>
+      <div class="tab-nav">
+        <button class="tab-btn active" id="client-tabbtn-sessions" onclick="switchClientTab('client','sessions')">Sessions</button>
+        <button class="tab-btn" id="client-tabbtn-programs" onclick="switchClientTab('client','programs')">Programs</button>
+        <button class="tab-btn" id="client-tabbtn-progress" onclick="switchClientTab('client','progress')">Progress</button>
       </div>
 
-      <p class="section-title">My Workout Plans</p>
-      <div class="client-list" id="client-workouts-list">
-        <div class="empty-state">No workout plans yet.</div>
+      <div class="tab-panel active" id="client-tab-sessions">
+        <p class="section-title">Upcoming &amp; Past Sessions</p>
+        <div class="client-list" id="client-sessions-list">
+          <div class="empty-state">Loading sessions...</div>
+        </div>
       </div>
 
-      <p class="section-title" style="margin-top:14px;">My Progress</p>
+      <div class="tab-panel" id="client-tab-programs">
+        <p class="section-title">My Workout Plans</p>
+        <div class="client-list" id="client-workouts-list">
+          <div class="empty-state">No workout plans yet.</div>
+        </div>
+      </div>
 
-      <div class="progress-subsection">
+      <div class="tab-panel" id="client-tab-progress">
         <div class="section-header">
-          <p class="progress-label" style="margin-bottom:0;">Weight</p>
-          <button class="btn-progress-action" onclick="toggleWeightForm()">+ Log Weight</button>
+          <p class="section-title" style="margin-bottom:0;">My Progress</p>
+          <button class="btn-icon-feedback" onclick="openFeedback('client')" title="Feedback from your coach">📝</button>
         </div>
-        <div class="client-form" id="weight-form">
-          <div class="form-group">
-            <label>Weight (kg)</label>
-            <input type="number" step="0.1" id="weight-value" placeholder="e.g. 72.5" />
-          </div>
-          <button class="btn-primary" onclick="addWeightLog()">Save Weight</button>
-          <p class="msg" id="weight-msg"></p>
-        </div>
-        <div class="client-list" id="client-weight-list">
-          <div class="empty-state">Loading...</div>
-        </div>
-      </div>
 
-      <div class="progress-subsection">
-        <div class="section-header">
-          <p class="progress-label" style="margin-bottom:0;">Workout Performance</p>
-          <button class="btn-progress-action" onclick="toggleWorkoutLogForm()">+ Log Performance</button>
-        </div>
-        <div class="client-form" id="workoutlog-form">
-          <div class="form-group" id="workoutlog-session-group">
-            <label>Session</label>
-            <select id="workoutlog-session" style="width:100%; padding:12px 14px; background:#0a0f0a; border:1px solid #1e3a1e; border-radius:10px; color:#f0f0f0; font-size:14px;"></select>
+        <div class="progress-subsection">
+          <div class="section-header">
+            <p class="progress-label" style="margin-bottom:0;">Weight</p>
+            <button class="btn-progress-action" onclick="toggleWeightForm()">+ Log Weight</button>
           </div>
-          <p class="empty-state" id="workoutlog-no-sessions-msg" style="display:none; padding:8px 0;">No sessions available yet. Ask your coach to schedule a session first.</p>
-          <div id="workoutlog-fields">
+          <div class="client-form" id="weight-form">
             <div class="form-group">
-              <label>Exercise Name</label>
-              <input type="text" id="workoutlog-exercise" placeholder="e.g. Bench Press" />
+              <label>Weight (kg)</label>
+              <input type="number" step="0.1" id="weight-value" placeholder="e.g. 72.5" />
             </div>
-            <div class="form-row" style="display:flex; gap:10px;">
-              <div class="form-group" style="flex:1; min-width:0;">
-                <label>Sets</label>
-                <input type="number" id="workoutlog-sets" placeholder="3" />
-              </div>
-              <div class="form-group" style="flex:1; min-width:0;">
-                <label>Reps</label>
-                <input type="number" id="workoutlog-reps" placeholder="10" />
-              </div>
-              <div class="form-group" style="flex:1; min-width:0;">
-                <label>Weight (kg)</label>
-                <input type="number" step="0.1" id="workoutlog-weight" placeholder="40" />
-              </div>
+            <button class="btn-primary" onclick="addWeightLog()">Save Weight</button>
+            <p class="msg" id="weight-msg"></p>
+          </div>
+          <div class="client-list" id="client-weight-list">
+            <div class="empty-state">Loading...</div>
+          </div>
+        </div>
+
+        <div class="progress-subsection">
+          <div class="section-header">
+            <p class="progress-label" style="margin-bottom:0;">Workout Performance</p>
+            <button class="btn-progress-action" onclick="toggleWorkoutLogForm()">+ Log Performance</button>
+          </div>
+          <div class="client-form" id="workoutlog-form">
+            <div class="form-group" id="workoutlog-session-group">
+              <label>Session</label>
+              <select id="workoutlog-session" style="width:100%; padding:12px 14px; background:#0a0f0a; border:1px solid #1e3a1e; border-radius:10px; color:#f0f0f0; font-size:14px;"></select>
             </div>
-            <button class="btn-primary" onclick="addWorkoutLog()">Save Performance</button>
-            <p class="msg" id="workoutlog-msg"></p>
+            <p class="empty-state" id="workoutlog-no-sessions-msg" style="display:none; padding:8px 0;">No sessions available yet. Ask your coach to schedule a session first.</p>
+            <div id="workoutlog-fields">
+              <div class="form-group">
+                <label>Exercise Name</label>
+                <input type="text" id="workoutlog-exercise" placeholder="e.g. Bench Press" />
+              </div>
+              <div class="form-row" style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1; min-width:0;">
+                  <label>Sets</label>
+                  <input type="number" id="workoutlog-sets" placeholder="3" />
+                </div>
+                <div class="form-group" style="flex:1; min-width:0;">
+                  <label>Reps</label>
+                  <input type="number" id="workoutlog-reps" placeholder="10" />
+                </div>
+                <div class="form-group" style="flex:1; min-width:0;">
+                  <label>Weight (kg)</label>
+                  <input type="number" step="0.1" id="workoutlog-weight" placeholder="40" />
+                </div>
+              </div>
+              <button class="btn-primary" onclick="addWorkoutLog()">Save Performance</button>
+              <p class="msg" id="workoutlog-msg"></p>
+            </div>
+          </div>
+
+          <div class="chart-card" id="client-chart-card" style="display:none;">
+            <div class="chart-card-header">
+              <span class="chart-card-title">Progress Over Time</span>
+              <select id="client-chart-exercise-select" class="chart-exercise-select" onchange="onClientExerciseChange()"></select>
+            </div>
+            <div class="chart-canvas-wrap" id="client-chart-canvas-wrap">
+              <canvas id="client-workout-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="client-list" id="client-workoutlog-list">
+            <div class="empty-state">Loading...</div>
           </div>
         </div>
 
-        <div class="chart-card" id="client-chart-card" style="display:none;">
-          <div class="chart-card-header">
-            <span class="chart-card-title">Progress Over Time</span>
-            <select id="client-chart-exercise-select" class="chart-exercise-select" onchange="onClientExerciseChange()"></select>
+        <div class="progress-subsection">
+          <div class="section-header">
+            <p class="progress-label" style="margin-bottom:0;">Progress Photos</p>
+            <button class="btn-progress-action" onclick="togglePhotoForm()">+ Add Photo</button>
           </div>
-          <div class="chart-canvas-wrap" id="client-chart-canvas-wrap">
-            <canvas id="client-workout-chart"></canvas>
+          <div class="photo-add-panel" id="photo-form">
+            <input type="file" id="photo-file" accept="image/*" />
+            <button class="btn-photo-upload" onclick="addProgressPhoto()">Upload</button>
+          </div>
+          <p class="msg" id="photo-msg" style="margin:0 0 8px 0;"></p>
+          <div id="client-photo-compare" style="display:none;"></div>
+          <div id="client-photo-groups">
+            <div class="empty-state">Loading...</div>
           </div>
         </div>
-
-        <div class="client-list" id="client-workoutlog-list">
-          <div class="empty-state">Loading...</div>
-        </div>
-      </div>
-
-      <div class="progress-subsection">
-        <div class="section-header">
-          <p class="progress-label" style="margin-bottom:0;">Progress Photos</p>
-          <button class="btn-progress-action" onclick="togglePhotoForm()">+ Add Photo</button>
-        </div>
-        <div class="photo-add-panel" id="photo-form">
-          <input type="file" id="photo-file" accept="image/*" />
-          <button class="btn-photo-upload" onclick="addProgressPhoto()">Upload</button>
-        </div>
-        <p class="msg" id="photo-msg" style="margin:0 0 8px 0;"></p>
-        <div id="client-photo-compare" style="display:none;"></div>
-        <div id="client-photo-groups">
-          <div class="empty-state">Loading...</div>
-        </div>
-      </div>
-
-      <p class="section-title" style="margin-top:14px;">Feedback from your Coach</p>
-      <div class="client-list" id="client-feedback-list">
-        <div class="empty-state">Loading...</div>
       </div>
     </div>
   </div>
@@ -1739,6 +1790,21 @@
   <!-- PHOTO LIGHTBOX (individual photo view) -->
   <div id="photo-lightbox" class="photo-lightbox" onclick="closeLightbox()">
     <img id="photo-lightbox-img" src="" />
+  </div>
+
+  <!-- FEEDBACK PANEL (shared by coach and client) -->
+  <div id="feedback-panel" class="messages-overlay">
+    <div class="messages-box">
+      <div class="messages-header">
+        <h3 id="feedback-panel-title">Feedback</h3>
+        <button class="btn-back" onclick="closeFeedbackPanel()">✕ Close</button>
+      </div>
+      <div class="messages-list" id="feedback-panel-list"></div>
+      <div class="messages-input-row" id="feedback-input-row">
+        <input type="text" id="feedback-panel-text" placeholder="Write feedback for this client..." />
+        <button class="btn-primary" style="width:auto; margin-top:0;" onclick="sendFeedbackFromPanel()">Send</button>
+      </div>
+    </div>
   </div>
 
   <!-- MESSAGES PANEL (shared by coach and client) -->
@@ -2246,6 +2312,7 @@
       document.getElementById('detail-client-name').innerHTML = escapeHtml(clientName) + '<span id="detail-status-badge"></span>';
       document.getElementById('session-form').classList.remove('open');
       document.getElementById('program-form').classList.remove('open');
+      switchClientTab('coach', 'sessions');
       showPage('client-detail-page');
       loadSessions();
       renderAiFeatures();
@@ -2254,7 +2321,6 @@
       loadWeightLogsCoach();
       loadWorkoutLogsCoach();
       loadPhotosCoach();
-      loadFeedbackCoach();
       loadClientCredentials();
     }
 
@@ -2557,63 +2623,91 @@
       }
     }
 
-    // ── FEEDBACK ──
-    function renderFeedbackList(listEl, results) {
-      if (results.length === 0) {
-        listEl.innerHTML = '<div class="empty-state">No feedback yet.</div>';
-        return;
-      }
-      listEl.innerHTML = '';
-      results.forEach(f => {
-        const d = f.get('date');
-        const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
-        const card = document.createElement('div');
-        card.className = 'feedback-card';
-        card.innerHTML = `<div class="feedback-date">${escapeHtml(dateStr)}</div><div class="feedback-text">${escapeHtml(f.get('text') || '')}</div>`;
-        listEl.appendChild(card);
+    // ── TAB NAVIGATION (coach & client) ──
+    function switchClientTab(scope, tabName) {
+      ['sessions', 'programs', 'progress'].forEach(t => {
+        const panel = document.getElementById(scope + '-tab-' + t);
+        const btn = document.getElementById(scope + '-tabbtn-' + t);
+        if (panel) panel.classList.toggle('active', t === tabName);
+        if (btn) btn.classList.toggle('active', t === tabName);
       });
+      if (tabName === 'progress') {
+        setTimeout(() => {
+          if (scope === 'coach' && coachWorkoutChart) coachWorkoutChart.resize();
+          if (scope === 'client' && clientWorkoutChart) clientWorkoutChart.resize();
+        }, 50);
+      }
     }
 
-    async function loadFeedbackCoach() {
-      const listEl = document.getElementById('coach-feedback-list');
+    // ── FEEDBACK PANEL (shared coach/client, tied to client's Progress) ──
+    let feedbackContext = null;
+
+    function openFeedback(role) {
+      if (role === 'coach') {
+        feedbackContext = { clientId: currentClientId, coachId: currentCoachUserId, role: 'coach' };
+        document.getElementById('feedback-panel-title').textContent = 'Feedback — ' + currentClientName;
+        document.getElementById('feedback-input-row').style.display = 'flex';
+      } else {
+        feedbackContext = { clientId: sessionClientId, coachId: sessionCoachId, role: 'client' };
+        document.getElementById('feedback-panel-title').textContent = 'Feedback from your Coach';
+        document.getElementById('feedback-input-row').style.display = 'none';
+      }
+      document.getElementById('feedback-panel-text').value = '';
+      document.getElementById('feedback-panel').classList.add('open');
+      loadFeedbackPanel();
+    }
+
+    function closeFeedbackPanel() {
+      document.getElementById('feedback-panel').classList.remove('open');
+      feedbackContext = null;
+    }
+
+    async function loadFeedbackPanel() {
+      const listEl = document.getElementById('feedback-panel-list');
+      if (!feedbackContext) return;
+      listEl.innerHTML = '<div class="empty-state">Loading...</div>';
       try {
         const Feedback = Parse.Object.extend('Feedbacks');
         const query = new Parse.Query(Feedback);
-        query.equalTo('clientId', currentClientId);
+        query.equalTo('clientId', feedbackContext.clientId);
         query.descending('date');
         const results = await query.find();
-        renderFeedbackList(listEl, results);
+
+        if (results.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No feedback yet.</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        results.forEach(f => {
+          const d = f.get('date');
+          const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+          const card = document.createElement('div');
+          card.className = 'feedback-card';
+          card.innerHTML = `<div class="feedback-date">${escapeHtml(dateStr)}</div><div class="feedback-text">${escapeHtml(f.get('text') || '')}</div>`;
+          listEl.appendChild(card);
+        });
       } catch(e) {
         listEl.innerHTML = '<div class="empty-state">Error loading feedback.</div>';
       }
     }
 
-    async function addFeedback() {
-      const text = document.getElementById('feedback-text').value.trim();
-      const msg = document.getElementById('feedback-msg');
-      if (!text) {
-        msg.className = 'msg error';
-        msg.textContent = 'Please write a feedback message.';
-        return;
-      }
-      msg.className = 'msg';
-      msg.textContent = 'Saving...';
+    async function sendFeedbackFromPanel() {
+      const input = document.getElementById('feedback-panel-text');
+      const text = input.value.trim();
+      if (!text || !feedbackContext || feedbackContext.role !== 'coach') return;
       try {
-        const user = await Parse.User.currentAsync();
         const Feedback = Parse.Object.extend('Feedbacks');
         const feedback = new Feedback();
-        feedback.set('clientId', currentClientId);
-        feedback.set('coachId', user.id);
+        feedback.set('clientId', feedbackContext.clientId);
+        feedback.set('coachId', feedbackContext.coachId);
         feedback.set('text', text);
         feedback.set('date', new Date());
         await feedback.save();
-        msg.className = 'msg success';
-        msg.textContent = 'Feedback sent!';
-        document.getElementById('feedback-text').value = '';
-        loadFeedbackCoach();
+        input.value = '';
+        loadFeedbackPanel();
       } catch(e) {
-        msg.className = 'msg error';
-        msg.textContent = e.message || 'Failed to save feedback.';
+        alert('Error sending feedback: ' + (e.message || ''));
       }
     }
 
@@ -3250,13 +3344,13 @@
 
     function loadClientDashboard() {
       document.getElementById('client-dash-name').textContent = sessionClientName;
+      switchClientTab('client', 'sessions');
       showPage('client-dashboard-page');
       loadClientSessions();
       loadClientWorkoutPlans();
       loadWeightLogsClient();
       loadWorkoutLogsClient();
       loadPhotosClient();
-      loadFeedbackClient();
       populateSessionDropdown();
       showWelcomeBannerIfNeeded();
     }
@@ -3593,20 +3687,6 @@
     }
 
     // ── FEEDBACK (client) ──
-    async function loadFeedbackClient() {
-      const listEl = document.getElementById('client-feedback-list');
-      try {
-        const Feedback = Parse.Object.extend('Feedbacks');
-        const query = new Parse.Query(Feedback);
-        query.equalTo('clientId', sessionClientId);
-        query.descending('date');
-        const results = await query.find();
-        renderFeedbackList(listEl, results);
-      } catch(e) {
-        listEl.innerHTML = '<div class="empty-state">Error loading feedback.</div>';
-      }
-    }
-
     async function loadClientSessions() {
       const listEl = document.getElementById('client-sessions-list');
       try {
