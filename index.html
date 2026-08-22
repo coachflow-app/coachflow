@@ -896,6 +896,131 @@
       transition: height 0.15s ease;
     }
 
+    .program-form-layout {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .program-form-main { flex: 1; min-width: 0; }
+
+    .program-form-ai {
+      width: 92px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-ai-tool {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      color: #22c55e;
+      border-radius: 10px;
+      padding: 10px 4px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .btn-ai-tool:disabled { opacity: 0.5; }
+
+    .btn-ai-tool .ai-tool-icon { font-size: 17px; }
+
+    .program-notes-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 12px;
+      background: #0a0f0a;
+      border: 1px solid #1e3a1e;
+      border-radius: 10px;
+      color: #f0f0f0;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .credentials-card {
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
+    .credentials-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+
+    .credentials-label { color: #6b7280; }
+    .credentials-value { color: #f0f0f0; font-weight: 600; }
+
+    .welcome-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #0d1f0d;
+      border: 1px solid #22c55e;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #d1fae5;
+    }
+
+    .welcome-banner-close {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .exec-exercise-row {
+      background: #0a0f0a;
+      border: 1px solid #1e3a1e;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .exec-exercise-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f0f0f0;
+      margin-bottom: 6px;
+    }
+
+    .exec-target { font-weight: 400; color: #6b7280; font-size: 11px; }
+
+    .exec-inputs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .exec-inputs input {
+      flex: 1;
+      padding: 8px 10px;
+      background: #111811;
+      border: 1px solid #1e3a1e;
+      border-radius: 8px;
+      color: #f0f0f0;
+      font-size: 12px;
+    }
+
+    .program-execution { margin-top: 10px; }
+
     .floating-messages-btn {
       display: none;
       position: fixed;
@@ -1348,6 +1473,13 @@
         <p>Manage sessions and programs for this client.</p>
       </div>
 
+      <div class="credentials-card">
+        <p class="progress-label" style="margin-bottom:6px;">Client Login Details</p>
+        <div id="client-credentials-box">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
       <div class="section-header">
         <p class="section-title" style="margin-bottom:0;">Sessions</p>
         <button class="btn-add" onclick="toggleSessionForm()">+ Add Session</button>
@@ -1376,17 +1508,27 @@
       </div>
 
       <div class="client-form" id="program-form">
-        <div class="form-group">
-          <label>Program Title</label>
-          <input type="text" id="program-title" placeholder="e.g. Week 1 - Upper Body" />
-        </div>
-        <div id="exercise-rows"></div>
-        <button class="btn-secondary" onclick="addExerciseRow()">+ Add Exercise</button>
-        <button class="btn-primary" onclick="saveManualProgram()">Save Program</button>
-        <p class="msg" id="program-msg"></p>
-      </div>
+        <div class="program-form-layout">
+          <div class="program-form-main">
+            <div class="form-group">
+              <label>Program Title</label>
+              <input type="text" id="program-title" placeholder="e.g. Week 1 - Upper Body" />
+            </div>
+            <div id="exercise-rows"></div>
+            <button class="btn-secondary" onclick="addExerciseRow()">+ Add Exercise</button>
 
-      <div id="ai-features-container"></div>
+            <div class="form-group" style="margin-top:14px;">
+              <label>Notes / Message to Client</label>
+              <textarea id="program-notes" class="program-notes-textarea" placeholder="Add notes, or use the AI tools on the right to generate a message..."></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="saveManualProgram()">Save &amp; Send to Client</button>
+            <p class="msg" id="program-msg"></p>
+          </div>
+
+          <div class="program-form-ai" id="ai-features-container"></div>
+        </div>
+      </div>
 
       <p class="section-title" style="margin-top:20px;">Program History</p>
       <div class="client-list" id="program-history-list">
@@ -1450,6 +1592,11 @@
       <button class="btn-logout" onclick="clientLogout()">Log Out</button>
     </div>
     <div class="dashboard-content">
+      <div class="welcome-banner" id="welcome-banner">
+        <span id="welcome-banner-text"></span>
+        <button class="welcome-banner-close" onclick="dismissWelcomeBanner()">✕</button>
+      </div>
+
       <div class="welcome-card">
         <h3>Welcome, <span id="client-dash-name">Client</span> 👋</h3>
         <p>Here's your training overview.</p>
@@ -1604,6 +1751,10 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       updateFloatingMessagesBtn();
+      const assistantWidget = document.getElementById('coachflow-assistant-widget');
+      if (assistantWidget) {
+        assistantWidget.style.display = (id === 'client-dashboard-page') ? 'none' : '';
+      }
     }
 
     function updateFloatingMessagesBtn() {
@@ -1933,6 +2084,7 @@
         client.set('email', email);
         client.set('telephone', phone);
         client.set('coachId', user.id);
+        client.set('coachName', user.get('name') || user.get('username') || 'Your Coach');
 
         // Generate a temporary password for client portal access
         const tempPassword = generateTempPassword();
@@ -2078,6 +2230,25 @@
       loadWorkoutLogsCoach();
       loadPhotosCoach();
       loadFeedbackCoach();
+      loadClientCredentials();
+    }
+
+    async function loadClientCredentials() {
+      const box = document.getElementById('client-credentials-box');
+      box.innerHTML = '<div class="empty-state">Loading...</div>';
+      try {
+        const Client = Parse.Object.extend('Clients');
+        const query = new Parse.Query(Client);
+        const client = await query.get(currentClientId);
+        const email = client.get('email') || '-';
+        const password = client.get('password') || '-';
+        box.innerHTML = `
+          <div class="credentials-row"><span class="credentials-label">Email</span><span class="credentials-value">${escapeHtml(email)}</span></div>
+          <div class="credentials-row"><span class="credentials-label">Password</span><span class="credentials-value">${escapeHtml(password)}</span></div>
+        `;
+      } catch(e) {
+        box.innerHTML = '<div class="empty-state">Could not load login details.</div>';
+      }
     }
 
     // ── PROGRESS: WEIGHT ──
@@ -2518,68 +2689,23 @@
       const container = document.getElementById('ai-features-container');
       if (currentPlan === 'business') {
         container.innerHTML = `
-          <div class="ai-section">
-            <div class="ai-section-header">
-              <span class="ai-badge">AI</span>
-              <h4>AI Coaching Assistant</h4>
-            </div>
-            <button class="btn-ai" id="btn-gen-workout" onclick="generateWorkoutPlan()">Generate Workout Plan</button>
-            <button class="btn-ai" id="btn-gen-message" onclick="generateMotivationalMessage()">Generate Motivational Message</button>
-            <button class="btn-ai" id="btn-gen-reengage" onclick="checkAndGenerateReengagement()">Generate Re-engagement Message</button>
-            <div class="ai-result" id="ai-result"></div>
-            <textarea class="editable-result" id="ai-result-editable"></textarea>
-            <div class="ai-result-actions" id="ai-result-actions">
-              <button class="btn-primary" onclick="saveAiResultToClient()" style="margin-top:0;">Save to Client</button>
-              <button class="btn-small" onclick="discardAiResult()">Discard</button>
-            </div>
-          </div>
+          <button class="btn-ai-tool" id="btn-gen-workout" onclick="generateWorkoutPlan()">
+            <span class="ai-tool-icon">🏋️</span>Workout Plan
+          </button>
+          <button class="btn-ai-tool" id="btn-gen-message" onclick="generateMotivationalMessage()">
+            <span class="ai-tool-icon">💬</span>Motivation
+          </button>
+          <button class="btn-ai-tool" id="btn-gen-reengage" onclick="checkAndGenerateReengagement()">
+            <span class="ai-tool-icon">🔔</span>Re-engage
+          </button>
         `;
       } else {
         container.innerHTML = `
-          <div class="upgrade-lock">
-            <p>🔒 AI Coaching Assistant is available on the Business plan.</p>
-            <a href="#" onclick="showPage('pricing-page'); return false;">Upgrade to Business</a>
+          <div class="upgrade-lock" style="padding:10px 6px; font-size:10px;">
+            <p>🔒 AI tools available on Business plan.</p>
+            <a href="#" onclick="showPage('pricing-page'); return false;">Upgrade</a>
           </div>
         `;
-      }
-    }
-
-    let lastAiResultType = null;
-
-    function showEditableAiResult(text, type) {
-      lastAiResultType = type;
-      const editable = document.getElementById('ai-result-editable');
-      const actions = document.getElementById('ai-result-actions');
-      editable.value = text;
-      editable.classList.add('visible');
-      actions.classList.add('visible');
-    }
-
-    function discardAiResult() {
-      document.getElementById('ai-result-editable').classList.remove('visible');
-      document.getElementById('ai-result-actions').classList.remove('visible');
-      document.getElementById('ai-result').classList.remove('visible');
-    }
-
-    async function saveAiResultToClient() {
-      const text = document.getElementById('ai-result-editable').value.trim();
-      if (!text) return;
-
-      try {
-        const WorkoutPlan = Parse.Object.extend('WorkoutPlans');
-        const plan = new WorkoutPlan();
-        plan.set('clientId', currentClientId);
-        plan.set('content', text);
-        plan.set('type', lastAiResultType || 'message');
-        plan.set('title', lastAiResultType === 'workout' ? 'AI Workout Plan' : (lastAiResultType === 'reengagement' ? 'Re-engagement Message' : 'Motivational Message'));
-        await plan.save();
-
-        discardAiResult();
-        document.getElementById('ai-result').classList.remove('visible');
-        loadProgramHistory();
-        alert('Saved! Your client can now see this in their portal.');
-      } catch(e) {
-        alert('Error saving: ' + (e.message || ''));
       }
     }
 
@@ -2616,6 +2742,7 @@
 
     async function saveManualProgram() {
       const title = document.getElementById('program-title').value.trim();
+      const notes = document.getElementById('program-notes').value.trim();
       const msg = document.getElementById('program-msg');
 
       if (!title) {
@@ -2639,9 +2766,9 @@
         });
       });
 
-      if (exercises.length === 0) {
+      if (exercises.length === 0 && !notes) {
         msg.className = 'msg error';
-        msg.textContent = 'Add at least one exercise.';
+        msg.textContent = 'Add at least one exercise or a message.';
         return;
       }
 
@@ -2655,6 +2782,7 @@
         plan.set('title', title);
         plan.set('type', 'manual');
         plan.set('exercises', exercises);
+        plan.set('content', notes);
         await plan.save();
 
         msg.className = 'msg success';
@@ -2662,6 +2790,7 @@
 
         document.getElementById('program-title').value = '';
         document.getElementById('exercise-rows').innerHTML = '';
+        document.getElementById('program-notes').value = '';
         exerciseRowCount = 0;
 
         loadProgramHistory();
@@ -2700,20 +2829,26 @@
       const d = p.get('createdAt');
       const dateStr = d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
       const title = p.get('title') || 'Workout Plan';
-      const type = p.get('type') || 'ai';
+      const exercises = p.get('exercises') || [];
+      const content = p.get('content') || '';
 
       let bodyHtml = '';
-      if (type === 'manual') {
-        const exercises = p.get('exercises') || [];
-        bodyHtml = exercises.map(ex => `
+      if (exercises.length > 0) {
+        bodyHtml += exercises.map(ex => `
           <div class="program-exercise">
             <div class="ex-name">${escapeHtml(ex.name || '')}</div>
             <div class="ex-detail">${escapeHtml(ex.sets || '-')} sets × ${escapeHtml(ex.reps || '-')} reps · Rest: ${escapeHtml(ex.rest || '-')}${ex.notes ? ' · ' + escapeHtml(ex.notes) : ''}</div>
           </div>
         `).join('');
-      } else {
-        bodyHtml = `<div class="program-exercise" style="white-space:pre-wrap;">${escapeHtml(p.get('content') || '')}</div>`;
       }
+      if (content) {
+        bodyHtml += `<div class="program-exercise" style="white-space:pre-wrap;">${escapeHtml(content)}</div>`;
+      }
+      if (!bodyHtml) {
+        bodyHtml = '<div class="program-exercise">No details.</div>';
+      }
+
+      const canExecute = isClientView && exercises.length > 0;
 
       card.innerHTML = `
         <div class="program-header">
@@ -2722,8 +2857,85 @@
         </div>
         ${bodyHtml}
         ${!isClientView ? `<button class="btn-small" style="margin-top:10px;" onclick="deleteProgram('${p.id}')">Delete</button>` : ''}
+        ${canExecute ? `<button class="btn-progress-action" style="margin-top:8px;" onclick="toggleProgramExecution('${p.id}')">Log My Results</button>
+          <div class="program-execution" id="program-exec-${p.id}" style="display:none;"></div>` : ''}
       `;
       return card;
+    }
+
+    // ── CLIENT: LOG RESULTS DIRECTLY FROM AN ASSIGNED PROGRAM ──
+    let clientPlansCache = {};
+
+    function toggleProgramExecution(planId) {
+      const container = document.getElementById('program-exec-' + planId);
+      if (!container) return;
+      const isOpen = container.style.display === 'block';
+      if (isOpen) {
+        container.style.display = 'none';
+        return;
+      }
+      const plan = clientPlansCache[planId];
+      if (!plan) return;
+      const exercises = plan.get('exercises') || [];
+
+      container.innerHTML = exercises.map((ex, i) => `
+        <div class="exec-exercise-row">
+          <div class="exec-exercise-name">${escapeHtml(ex.name || '')} <span class="exec-target">(target: ${escapeHtml(ex.sets || '-')} × ${escapeHtml(ex.reps || '-')})</span></div>
+          <div class="exec-inputs">
+            <input type="number" placeholder="Sets" id="exec-sets-${planId}-${i}" />
+            <input type="number" placeholder="Reps" id="exec-reps-${planId}-${i}" />
+            <input type="number" step="0.1" placeholder="Weight (kg)" id="exec-weight-${planId}-${i}" />
+          </div>
+        </div>
+      `).join('') + `
+        <button class="btn-primary" onclick="saveProgramExecution('${planId}')">Save My Results</button>
+        <p class="msg" id="exec-msg-${planId}"></p>
+      `;
+      container.style.display = 'block';
+    }
+
+    async function saveProgramExecution(planId) {
+      const plan = clientPlansCache[planId];
+      if (!plan) return;
+      const exercises = plan.get('exercises') || [];
+      const msg = document.getElementById('exec-msg-' + planId);
+      msg.className = 'msg';
+      msg.textContent = 'Saving...';
+
+      try {
+        const WorkoutLog = Parse.Object.extend('WorkoutLogs');
+        const toSave = [];
+        exercises.forEach((ex, i) => {
+          const sets = document.getElementById(`exec-sets-${planId}-${i}`)?.value;
+          const reps = document.getElementById(`exec-reps-${planId}-${i}`)?.value;
+          const weight = document.getElementById(`exec-weight-${planId}-${i}`)?.value;
+          if (!sets && !reps && !weight) return;
+          const log = new WorkoutLog();
+          log.set('clientId', sessionClientId);
+          log.set('sessionId', planId);
+          log.set('exerciseName', ex.name || 'Exercise');
+          log.set('sets', sets ? parseInt(sets) : 0);
+          log.set('reps', reps ? parseInt(reps) : 0);
+          log.set('weight', weight ? parseFloat(weight) : 0);
+          log.set('date', new Date());
+          toSave.push(log);
+        });
+
+        if (toSave.length === 0) {
+          msg.className = 'msg error';
+          msg.textContent = 'Enter at least one result.';
+          return;
+        }
+
+        await Promise.all(toSave.map(log => log.save()));
+        msg.className = 'msg success';
+        msg.textContent = 'Results saved!';
+        document.getElementById('program-exec-' + planId).style.display = 'none';
+        loadWorkoutLogsClient();
+      } catch(e) {
+        msg.className = 'msg error';
+        msg.textContent = e.message || 'Failed to save results.';
+      }
     }
 
     async function deleteProgram(id) {
@@ -2736,13 +2948,6 @@
       } catch(e) {
         alert('Error deleting program: ' + (e.message || ''));
       }
-    }
-
-    async function checkAndGenerateReengagement() {
-      const btn = document.getElementById('btn-gen-reengage');
-      const days = await getDaysSinceLastSession(currentClientId);
-      const daysText = days === null ? 'a while (no sessions logged yet)' : days + ' days';
-      await generateReengagementMessage(currentClientName, daysText, 'ai-result', btn);
     }
 
     // ── GEMINI AI INTEGRATION ──
@@ -2795,64 +3000,66 @@
 
     async function generateWorkoutPlan() {
       const btn = document.getElementById('btn-gen-workout');
-      const resultEl = document.getElementById('ai-result');
-      discardAiResult();
+      const textarea = document.getElementById('program-notes');
+      const msg = document.getElementById('program-msg');
+      const originalHtml = btn.innerHTML;
       btn.disabled = true;
-      btn.textContent = 'Generating...';
-      resultEl.classList.add('visible');
-      resultEl.textContent = 'Generating workout plan, please wait...';
+      btn.innerHTML = '<span class="ai-tool-icon">⏳</span>...';
 
       try {
         const prompt = `You are a professional fitness coach assistant. Create a concise, practical one-week workout plan for a client named ${currentClientName}. Include exercises, sets, and reps for each day. Keep it well-organized and easy to read in plain text (no markdown symbols).`;
         const result = await callGemini(prompt);
-        resultEl.classList.remove('visible');
-        showEditableAiResult(result, 'workout');
+        textarea.value = result;
       } catch(e) {
-        resultEl.textContent = 'Error generating workout plan: ' + (e.message || 'Unknown error');
+        msg.className = 'msg error';
+        msg.textContent = 'Error generating workout plan: ' + (e.message || 'Unknown error');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Generate Workout Plan';
+        btn.innerHTML = originalHtml;
       }
     }
 
     async function generateMotivationalMessage() {
       const btn = document.getElementById('btn-gen-message');
-      const resultEl = document.getElementById('ai-result');
-      discardAiResult();
+      const textarea = document.getElementById('program-notes');
+      const msg = document.getElementById('program-msg');
+      const originalHtml = btn.innerHTML;
       btn.disabled = true;
-      btn.textContent = 'Generating...';
-      resultEl.classList.add('visible');
-      resultEl.textContent = 'Generating message, please wait...';
+      btn.innerHTML = '<span class="ai-tool-icon">⏳</span>...';
 
       try {
         const prompt = `You are a friendly fitness coach. Write a short, warm, motivational message (2-3 sentences) to send to a client named ${currentClientName} to encourage them in their fitness journey. Keep it personal and natural, no markdown symbols.`;
         const result = await callGemini(prompt);
-        resultEl.classList.remove('visible');
-        showEditableAiResult(result, 'motivation');
+        textarea.value = result;
       } catch(e) {
-        resultEl.textContent = 'Error generating message: ' + (e.message || 'Unknown error');
+        msg.className = 'msg error';
+        msg.textContent = 'Error generating message: ' + (e.message || 'Unknown error');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Generate Motivational Message';
+        btn.innerHTML = originalHtml;
       }
     }
 
-    async function generateReengagementMessage(clientName, daysSinceLastSession, resultElId, btnEl) {
-      const resultEl = document.getElementById(resultElId);
-      discardAiResult();
-      if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Generating...'; }
-      resultEl.classList.add('visible');
-      resultEl.textContent = 'Generating re-engagement message, please wait...';
+    async function checkAndGenerateReengagement() {
+      const btn = document.getElementById('btn-gen-reengage');
+      const textarea = document.getElementById('program-notes');
+      const msg = document.getElementById('program-msg');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="ai-tool-icon">⏳</span>...';
 
       try {
-        const prompt = `You are a friendly fitness coach. A client named ${clientName} has not had a training session in ${daysSinceLastSession} days. Write a short, warm re-engagement message (2-3 sentences) to check in on them and invite them back, without sounding pushy. No markdown symbols.`;
+        const days = await getDaysSinceLastSession(currentClientId);
+        const daysText = days === null ? 'a while (no sessions logged yet)' : days + ' days';
+        const prompt = `You are a friendly fitness coach. A client named ${currentClientName} has not had a training session in ${daysText}. Write a short, warm re-engagement message (2-3 sentences) to check in on them and invite them back, without sounding pushy. No markdown symbols.`;
         const result = await callGemini(prompt);
-        resultEl.classList.remove('visible');
-        showEditableAiResult(result, 'reengagement');
+        textarea.value = result;
       } catch(e) {
-        resultEl.textContent = 'Error generating message: ' + (e.message || 'Unknown error');
+        msg.className = 'msg error';
+        msg.textContent = 'Error generating message: ' + (e.message || 'Unknown error');
       } finally {
-        if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Generate Re-engagement Message'; }
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
       }
     }
 
@@ -2993,6 +3200,7 @@
         sessionClientId = clientRecord.id;
         sessionClientName = clientRecord.get('name') || 'Client';
         sessionCoachId = clientRecord.get('coachId') || null;
+        sessionCoachName = clientRecord.get('coachName') || 'Your Coach';
 
         msg.className = 'msg success';
         msg.textContent = 'Welcome back!';
@@ -3006,6 +3214,7 @@
     let sessionClientId = null;
     let sessionClientName = null;
     let sessionCoachId = null;
+    let sessionCoachName = null;
 
     function clientLogout() {
       sessionClientId = null;
@@ -3024,6 +3233,29 @@
       loadPhotosClient();
       loadFeedbackClient();
       populateSessionDropdown();
+      showWelcomeBannerIfNeeded();
+    }
+
+    function showWelcomeBannerIfNeeded() {
+      const key = 'coachflow_welcomed_' + sessionClientId;
+      let alreadyWelcomed = true;
+      try {
+        alreadyWelcomed = !!localStorage.getItem(key);
+      } catch(e) {
+        return;
+      }
+      if (alreadyWelcomed) return;
+
+      const banner = document.getElementById('welcome-banner');
+      const text = document.getElementById('welcome-banner-text');
+      text.textContent = `👋 Welcome ${sessionClientName}! Your coach ${sessionCoachName || 'CoachFlow'} is excited to help you on your fitness journey.`;
+      banner.style.display = 'flex';
+      try { localStorage.setItem(key, '1'); } catch(e) {}
+      setTimeout(() => { banner.style.display = 'none'; }, 8000);
+    }
+
+    function dismissWelcomeBanner() {
+      document.getElementById('welcome-banner').style.display = 'none';
     }
 
     // ── PROGRESS FORMS TOGGLE ──
@@ -3414,6 +3646,7 @@
 
         listEl.innerHTML = '';
         results.forEach(w => {
+          clientPlansCache[w.id] = w;
           listEl.appendChild(renderProgramCard(w, true));
         });
       } catch(e) {
@@ -3430,7 +3663,7 @@
 
   <!-- Elfsight AI Chatbot | CoachFlow Assistant -->
   <script src="https://elfsightcdn.com/platform.js" async></script>
-  <div class="elfsight-app-df01f273-19bd-4bbd-8618-9d4dce159492" data-elfsight-app-lazy style="position:fixed; bottom:20px; right:20px; z-index:99999;"></div>
+  <div id="coachflow-assistant-widget" class="elfsight-app-df01f273-19bd-4bbd-8618-9d4dce159492" data-elfsight-app-lazy style="position:fixed; bottom:20px; right:20px; z-index:99999;"></div>
 
 </body>
 </html>
